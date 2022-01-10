@@ -1,0 +1,8 @@
+builds:
+  - skip: true
+
+release:
+  draft: true
+
+changelog:
+  sort: asc
