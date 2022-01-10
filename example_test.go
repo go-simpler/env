@@ -21,6 +21,7 @@ func ExampleLoad() {
 	fmt.Println(cfg.Port) // 8080
 }
 
+//nolint:gocritic
 func ExampleLoad_required() {
 	// os.Setenv("PORT", "8080")
 
