@@ -26,7 +26,7 @@ go get github.com/junk1tm/env
 * Simple API
 * Dependency-free
 * `required` validation
-* Lightweight yet [customizable](customization)
+* Lightweight yet [customizable](#customization)
 
 ## Supported types
 
