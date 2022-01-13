@@ -11,10 +11,10 @@ import (
 )
 
 func TestLoadFrom(t *testing.T) {
-	t.Run("invalid argument error", func(t *testing.T) {
-		test := func(name string, v interface{}) {
+	t.Run("invalid argument", func(t *testing.T) {
+		test := func(name string, dst interface{}) {
 			t.Run(name, func(t *testing.T) {
-				if err := env.LoadFrom(env.Map{}, v); !errors.Is(err, env.ErrInvalidArgument) {
+				if err := env.LoadFrom(env.Map{}, dst); !errors.Is(err, env.ErrInvalidArgument) {
 					t.Errorf("got %v; want %v", err, env.ErrInvalidArgument)
 				}
 			})
@@ -26,37 +26,48 @@ func TestLoadFrom(t *testing.T) {
 		test("nil struct pointer", (*struct{})(nil))
 	})
 
-	t.Run("not set error", func(t *testing.T) {
-		var notSetErr *env.NotSetError
-
+	t.Run("empty tag name", func(t *testing.T) {
 		var cfg struct {
-			Port string `env:"PORT,required"`
+			Port string `env:""`
 		}
-		if err := env.LoadFrom(env.Map{}, &cfg); !errors.As(err, &notSetErr) {
-			t.Fatalf("got %T; want %T", err, notSetErr)
-		}
-		if !reflect.DeepEqual(notSetErr.Names, []string{"PORT"}) {
-			t.Errorf("got %v; want [PORT]", notSetErr.Names)
+		if err := env.LoadFrom(env.Map{}, &cfg); !errors.Is(err, env.ErrEmptyTagName) {
+			t.Errorf("got %v; want %v", err, env.ErrEmptyTagName)
 		}
 	})
 
-	t.Run("unsupported type error", func(t *testing.T) {
+	t.Run("unsupported type", func(t *testing.T) {
 		m := env.Map{"PORT": "8080"}
 
-		var unsupportedTypeErr *env.UnsupportedTypeError
-
 		var cfg struct {
-			Port complex64 `env:"PORT,required"`
+			Port complex64 `env:"PORT"`
 		}
-		if err := env.LoadFrom(m, &cfg); !errors.As(err, &unsupportedTypeErr) {
-			t.Fatalf("got %T; want %T", err, unsupportedTypeErr)
-		}
-		if unsupportedTypeErr.Type != reflect.TypeOf(cfg.Port) {
-			t.Errorf("got %s; want %s", unsupportedTypeErr.Type, reflect.TypeOf(cfg.Port))
+		if err := env.LoadFrom(m, &cfg); !errors.Is(err, env.ErrUnsupportedType) {
+			t.Errorf("got %v; want %v", err, env.ErrUnsupportedType)
 		}
 	})
 
-	t.Run("with default values", func(t *testing.T) {
+	t.Run("ignored fields", func(t *testing.T) {
+		m := env.Map{
+			"UNEXPORTED":  "foo",
+			"MISSING_TAG": "bar",
+		}
+
+		var cfg struct {
+			unexported string `env:"UNEXPORTED"`
+			MissingTag string
+		}
+		if err := env.LoadFrom(m, &cfg); err != nil {
+			t.Fatalf("got %v; want no error", err)
+		}
+		if cfg.unexported != "" {
+			t.Errorf("got %s; want empty string", cfg.unexported)
+		}
+		if cfg.MissingTag != "" {
+			t.Errorf("got %s; want empty string", cfg.MissingTag)
+		}
+	})
+
+	t.Run("default values", func(t *testing.T) {
 		m := env.Map{"PORT": "8081"}
 
 		cfg := struct {
@@ -77,7 +88,7 @@ func TestLoadFrom(t *testing.T) {
 		}
 	})
 
-	t.Run("with nested structs", func(t *testing.T) {
+	t.Run("nested structs", func(t *testing.T) {
 		m := env.Map{
 			"DB_PORT":   "5432",
 			"HTTP_PORT": "8080",
@@ -85,10 +96,10 @@ func TestLoadFrom(t *testing.T) {
 
 		var cfg struct {
 			DB struct {
-				Port int `env:"DB_PORT,required"`
+				Port int `env:"DB_PORT"`
 			}
 			HTTP struct {
-				Port int `env:"HTTP_PORT,required"`
+				Port int `env:"HTTP_PORT"`
 			}
 		}
 		if err := env.LoadFrom(m, &cfg); err != nil {
@@ -102,11 +113,53 @@ func TestLoadFrom(t *testing.T) {
 		}
 	})
 
+	t.Run("required tag option", func(t *testing.T) {
+		var notSetErr *env.NotSetError
+
+		var cfg struct {
+			Port string `env:"PORT,required"`
+		}
+		if err := env.LoadFrom(env.Map{}, &cfg); !errors.As(err, &notSetErr) {
+			t.Fatalf("got %T; want %T", err, notSetErr)
+		}
+		if !reflect.DeepEqual(notSetErr.Names, []string{"PORT"}) {
+			t.Errorf("got %v; want [PORT]", notSetErr.Names)
+		}
+	})
+
+	t.Run("expand tag option", func(t *testing.T) {
+		m := env.Map{
+			"HOST": "localhost",
+			"PORT": "8080",
+			"ADDR": "$HOST:${PORT}", // try both $VAR and ${VAR} forms.
+		}
+
+		var cfg struct {
+			Addr string `env:"ADDR,expand"`
+		}
+		if err := env.LoadFrom(m, &cfg); err != nil {
+			t.Fatalf("got %v; want no error", err)
+		}
+		if cfg.Addr != "localhost:8080" {
+			t.Errorf("got %s; want localhost:8080", cfg.Addr)
+		}
+	})
+
+	t.Run("invalid tag option", func(t *testing.T) {
+		var cfg struct {
+			Port string `env:"PORT,foo"`
+		}
+		if err := env.LoadFrom(env.Map{}, &cfg); !errors.Is(err, env.ErrInvalidTagOption) {
+			t.Log(err)
+			t.Errorf("got %v; want %v", err, env.ErrInvalidTagOption)
+		}
+	})
+
 	t.Run("with prefix", func(t *testing.T) {
 		m := env.Map{"APP_PORT": "8080"}
 
 		var cfg struct {
-			Port int `env:"PORT,required"`
+			Port int `env:"PORT"`
 		}
 		if err := env.LoadFrom(m, &cfg, env.WithPrefix("APP_")); err != nil {
 			t.Fatalf("got %v; want no error", err)
@@ -120,39 +173,13 @@ func TestLoadFrom(t *testing.T) {
 		m := env.Map{"PORTS": "8080;8081;8082"}
 
 		var cfg struct {
-			Ports []int `env:"PORTS,required"`
+			Ports []int `env:"PORTS"`
 		}
 		if err := env.LoadFrom(m, &cfg, env.WithSliceSeparator(";")); err != nil {
 			t.Fatalf("got %v; want no error", err)
 		}
 		if want := []int{8080, 8081, 8082}; !reflect.DeepEqual(cfg.Ports, want) {
 			t.Errorf("got %v; want %v", cfg.Ports, want)
-		}
-	})
-
-	t.Run("skipped fields", func(t *testing.T) {
-		m := env.Map{
-			"UNEXPORTED":  "foo",
-			"MISSING_TAG": "bar",
-			"EMPTY_NAME":  "baz",
-		}
-
-		var cfg struct {
-			unexported string `env:"UNEXPORTED,required"`
-			MissingTag string `json:"missing_tag"`
-			EmptyName  string `env:",required"`
-		}
-		if err := env.LoadFrom(m, &cfg); err != nil {
-			t.Fatalf("got %v; want no error", err)
-		}
-		if cfg.unexported != "" {
-			t.Errorf("got %s; want empty string", cfg.unexported)
-		}
-		if cfg.MissingTag != "" {
-			t.Errorf("got %s; want empty string", cfg.MissingTag)
-		}
-		if cfg.EmptyName != "" {
-			t.Errorf("got %s; want empty string", cfg.EmptyName)
 		}
 	})
 
@@ -177,38 +204,38 @@ func TestLoadFrom(t *testing.T) {
 		}
 
 		var cfg struct {
-			Int       int             `env:"INT,required"`
-			Ints      []int           `env:"INTS,required"`
-			Int8      int8            `env:"INT8,required"`
-			Int8s     []int8          `env:"INT8S,required"`
-			Int16     int16           `env:"INT16,required"`
-			Int16s    []int16         `env:"INT16S,required"`
-			Int32     int32           `env:"INT32,required"`
-			Int32s    []int32         `env:"INT32S,required"`
-			Int64     int64           `env:"INT64,required"`
-			Int64s    []int64         `env:"INT64S,required"`
-			Uint      uint            `env:"UINT,required"`
-			Uints     []uint          `env:"UINTS,required"`
-			Uint8     uint8           `env:"UINT8,required"`
-			Uint8s    []uint8         `env:"UINT8S,required"`
-			Uint16    uint16          `env:"UINT16,required"`
-			Uint16s   []uint16        `env:"UINT16S,required"`
-			Uint32    uint32          `env:"UINT32,required"`
-			Uint32s   []uint32        `env:"UINT32S,required"`
-			Uint64    uint64          `env:"UINT64,required"`
-			Uint64s   []uint64        `env:"UINT64S,required"`
-			Float32   float32         `env:"FLOAT32,required"`
-			Float32s  []float32       `env:"FLOAT32S,required"`
-			Float64   float64         `env:"FLOAT64,required"`
-			Float64s  []float64       `env:"FLOAT64S,required"`
-			Bool      bool            `env:"BOOL,required"`
-			Bools     []bool          `env:"BOOLS,required"`
-			String    string          `env:"STRING,required"`
-			Strings   []string        `env:"STRINGS,required"`
-			Duration  time.Duration   `env:"DURATION,required"`
-			Durations []time.Duration `env:"DURATIONS,required"`
-			IP        net.IP          `env:"IP,required"`
-			IPs       []net.IP        `env:"IPS,required"`
+			Int       int             `env:"INT"`
+			Ints      []int           `env:"INTS"`
+			Int8      int8            `env:"INT8"`
+			Int8s     []int8          `env:"INT8S"`
+			Int16     int16           `env:"INT16"`
+			Int16s    []int16         `env:"INT16S"`
+			Int32     int32           `env:"INT32"`
+			Int32s    []int32         `env:"INT32S"`
+			Int64     int64           `env:"INT64"`
+			Int64s    []int64         `env:"INT64S"`
+			Uint      uint            `env:"UINT"`
+			Uints     []uint          `env:"UINTS"`
+			Uint8     uint8           `env:"UINT8"`
+			Uint8s    []uint8         `env:"UINT8S"`
+			Uint16    uint16          `env:"UINT16"`
+			Uint16s   []uint16        `env:"UINT16S"`
+			Uint32    uint32          `env:"UINT32"`
+			Uint32s   []uint32        `env:"UINT32S"`
+			Uint64    uint64          `env:"UINT64"`
+			Uint64s   []uint64        `env:"UINT64S"`
+			Float32   float32         `env:"FLOAT32"`
+			Float32s  []float32       `env:"FLOAT32S"`
+			Float64   float64         `env:"FLOAT64"`
+			Float64s  []float64       `env:"FLOAT64S"`
+			Bool      bool            `env:"BOOL"`
+			Bools     []bool          `env:"BOOLS"`
+			String    string          `env:"STRING"`
+			Strings   []string        `env:"STRINGS"`
+			Duration  time.Duration   `env:"DURATION"`
+			Durations []time.Duration `env:"DURATIONS"`
+			IP        net.IP          `env:"IP"`
+			IPs       []net.IP        `env:"IPS"`
 		}
 		if err := env.LoadFrom(m, &cfg); err != nil {
 			t.Fatalf("got %v; want no error", err)

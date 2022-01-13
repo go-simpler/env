@@ -68,7 +68,7 @@ func setValue(v reflect.Value, s string) error {
 	case kindOf(v, reflect.String):
 		return setString(v, s)
 	default:
-		return &UnsupportedTypeError{Type: v.Type()}
+		return fmt.Errorf("%w %q", ErrUnsupportedType, v.Type())
 	}
 }
 

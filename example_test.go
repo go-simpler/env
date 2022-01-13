@@ -21,21 +21,6 @@ func ExampleLoad() {
 	fmt.Println(cfg.Port) // 8080
 }
 
-//nolint:gocritic
-func ExampleLoad_required() {
-	// os.Setenv("PORT", "8080")
-
-	var cfg struct {
-		Port int `env:"PORT,required"`
-	}
-	if err := env.Load(&cfg); err != nil {
-		var notSetErr *env.NotSetError
-		if errors.As(err, &notSetErr) {
-			fmt.Println(notSetErr.Names) // [PORT]
-		}
-	}
-}
-
 func ExampleLoad_defaultValue() {
 	os.Setenv("PORT", "8081")
 
@@ -66,6 +51,35 @@ func ExampleLoad_nestedStruct() {
 	fmt.Println(cfg.HTTP.Port) // 8080
 }
 
+//nolint:gocritic
+func ExampleLoad_required() {
+	// os.Setenv("PORT", "8080")
+
+	var cfg struct {
+		Port int `env:"PORT,required"`
+	}
+	if err := env.Load(&cfg); err != nil {
+		var notSetErr *env.NotSetError
+		if errors.As(err, &notSetErr) {
+			fmt.Println(notSetErr.Names) // [PORT]
+		}
+	}
+}
+
+func ExampleLoad_expand() {
+	os.Setenv("PORT", "8080")
+	os.Setenv("ADDR", "localhost:${PORT}")
+
+	var cfg struct {
+		Addr string `env:"ADDR,expand"`
+	}
+	if err := env.Load(&cfg); err != nil {
+		// handle error
+	}
+
+	fmt.Println(cfg.Addr) // localhost:8080
+}
+
 func ExampleLoadFrom() {
 	m := env.Map{"PORT": "8080"}
 
@@ -85,7 +99,7 @@ func ExampleWithPrefix() {
 	var cfg struct {
 		Port int `env:"PORT"`
 	}
-	if err := env.Load(&cfg, env.WithPrefix("APP")); err != nil {
+	if err := env.Load(&cfg, env.WithPrefix("APP_")); err != nil {
 		// handle error
 	}
 
