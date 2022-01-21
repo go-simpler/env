@@ -142,15 +142,17 @@ Use the `required` option to mark the environment variable as required. In case 
 type `NotSetError` will be returned.
 
 ```go
+// os.Setenv("HOST", "localhost")
 // os.Setenv("PORT", "8080")
 
 var cfg struct {
-    Port int `env:"PORT,required"`
+    Host string `env:"HOST,required"`
+    Port int    `env:"PORT,required"`
 }
 if err := env.Load(&cfg); err != nil {
     var notSetErr *env.NotSetError
     if errors.As(err, &notSetErr) {
-        fmt.Println(notSetErr.Names) // [PORT]
+        fmt.Println(notSetErr.Names) // [HOST PORT]
     }
 }
 ```
@@ -180,7 +182,7 @@ In addition to the tag-level options, `Load` also supports the following functio
 #### Prefix
 
 It is a common practise to prefix app's environment variables with some string (e.g., its name). Such a prefix can be
-set using `WithPrefix` option:
+set using the `WithPrefix` option:
 
 ```go
 os.Setenv("APP_PORT", "8080")
@@ -197,7 +199,7 @@ fmt.Println(cfg.Port) // 8080
 
 #### Slice separator
 
-Space is the default separator when parsing slice values. It can be changed using `WithSliceSeparator` option:
+Space is the default separator when parsing slice values. It can be changed using the `WithSliceSeparator` option:
 
 ```go
 os.Setenv("PORTS", "8080;8081;8082")
@@ -212,6 +214,38 @@ if err := env.Load(&cfg, env.WithSliceSeparator(";")); err != nil {
 fmt.Println(cfg.Ports[0]) // 8080
 fmt.Println(cfg.Ports[1]) // 8081
 fmt.Println(cfg.Ports[2]) // 8082
+```
+
+#### Usage on error
+
+`env` supports printing an auto-generated usage message the same way the `flag` package does it. It will be printed if
+the `WithUsageOnError` option is provided and an error occurs while loading environment variables:
+
+```go
+// os.Setenv("DB_HOST", "localhost")
+// os.Setenv("DB_PORT", "5432")
+
+cfg := struct {
+    DB struct {
+        Host string `env:"DB_HOST,required" desc:"database host"`
+        Port int    `env:"DB_PORT,required" desc:"database port"`
+    }
+    HTTPPort int             `env:"HTTP_PORT" desc:"http server port"`
+    Timeouts []time.Duration `env:"TIMEOUTS" desc:"timeout steps"`
+}{
+    HTTPPort: 8080,
+    Timeouts: []time.Duration{1 * time.Second, 2 * time.Second, 3 * time.Second},
+}
+if err := env.Load(&cfg, env.WithUsageOnError(os.Stdout)); err != nil {
+    // handle error
+}
+
+// Output:
+// Usage:
+//   DB_HOST    string           required            database host
+//   DB_PORT    int              required            database port
+//   HTTP_PORT  int              default 8080        http server port
+//   TIMEOUTS   []time.Duration  default [1s 2s 3s]  timeout steps
 ```
 
 [ci]: https://github.com/junk1tm/env/actions/workflows/go.yml

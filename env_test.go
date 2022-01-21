@@ -2,8 +2,10 @@ package env_test
 
 import (
 	"errors"
+	"io"
 	"net"
 	"reflect"
+	"strconv"
 	"testing"
 	"time"
 
@@ -117,14 +119,18 @@ func TestLoadFrom(t *testing.T) {
 		var notSetErr *env.NotSetError
 
 		var cfg struct {
-			Port string `env:"PORT,required"`
+			Host string `env:"HOST,required"`
+			Port int    `env:"PORT,required"`
 		}
 		if err := env.LoadFrom(env.Map{}, &cfg); !errors.As(err, &notSetErr) {
 			t.Fatalf("got %T; want %T", err, notSetErr)
 		}
-		if !reflect.DeepEqual(notSetErr.Names, []string{"PORT"}) {
-			t.Errorf("got %v; want [PORT]", notSetErr.Names)
+		if !reflect.DeepEqual(notSetErr.Names, []string{"HOST", "PORT"}) {
+			t.Errorf("got %v; want [HOST PORT]", notSetErr.Names)
 		}
+
+		// more coverage!
+		_ = notSetErr.Error()
 	})
 
 	t.Run("expand tag option", func(t *testing.T) {
@@ -147,10 +153,11 @@ func TestLoadFrom(t *testing.T) {
 
 	t.Run("invalid tag option", func(t *testing.T) {
 		var cfg struct {
-			Port string `env:"PORT,foo"`
+			HTTP struct {
+				Port string `env:"HTTP_PORT,foo"`
+			}
 		}
 		if err := env.LoadFrom(env.Map{}, &cfg); !errors.Is(err, env.ErrInvalidTagOption) {
-			t.Log(err)
 			t.Errorf("got %v; want %v", err, env.ErrInvalidTagOption)
 		}
 	})
@@ -180,6 +187,27 @@ func TestLoadFrom(t *testing.T) {
 		}
 		if want := []int{8080, 8081, 8082}; !reflect.DeepEqual(cfg.Ports, want) {
 			t.Errorf("got %v; want %v", cfg.Ports, want)
+		}
+	})
+
+	t.Run("with usage on error", func(t *testing.T) {
+		// restore the default usage after the test is finished.
+		usage := env.Usage
+		defer func() { env.Usage = usage }()
+
+		var called bool
+		env.Usage = func(w io.Writer, vars []env.Var) {
+			called = true
+		}
+
+		var cfg struct {
+			Port int `env:"PORT,required"`
+		}
+		if err := env.LoadFrom(env.Map{}, &cfg, env.WithUsageOnError(io.Discard)); err == nil {
+			t.Fatalf("want an error")
+		}
+		if !called {
+			t.Errorf("want usage to be called")
 		}
 	})
 
@@ -281,5 +309,47 @@ func TestLoadFrom(t *testing.T) {
 		test("durations", cfg.Durations, []time.Duration{time.Second, time.Minute, time.Hour})
 		test("unmarshaler", cfg.IP, net.IPv4zero)
 		test("unmarshalers", cfg.IPs, []net.IP{net.IPv4zero, net.IPv4bcast})
+	})
+
+	t.Run("parsing errors", func(t *testing.T) {
+		test := func(name, envName string, checkErr func(error) bool) {
+			t.Run(name, func(t *testing.T) {
+				// "-" is an invalid value for all these types, will cause an
+				// error for strconv.Parse*, time.ParseDuration and net.ParseIP.
+				m := env.Map{envName: "-"}
+
+				var cfg struct {
+					Int         int           `env:"INT"`
+					Uint        uint          `env:"UINT"`
+					Float       float64       `env:"FLOAT"`
+					Bool        bool          `env:"BOOL"`
+					Duration    time.Duration `env:"DURATION"`
+					Unmarshaler net.IP        `env:"UNMARSHALER"`
+					Slice       []net.IP      `env:"SLICE"`
+				}
+				if err := env.LoadFrom(m, &cfg); !checkErr(err) {
+					t.Errorf("want checkErr to pass")
+				}
+			})
+		}
+
+		isErrSyntax := func(err error) bool {
+			return errors.Is(err, strconv.ErrSyntax)
+		}
+		isInvalidDuration := func(err error) bool {
+			// time.ParseDuration does not return any sentinel error :(
+			return errors.Unwrap(err).Error() == `time: invalid duration "-"`
+		}
+		asParseError := func(err error) bool {
+			return errors.As(err, new(*net.ParseError))
+		}
+
+		test("invalid int", "INT", isErrSyntax)
+		test("invalid uint", "UINT", isErrSyntax)
+		test("invalid float", "FLOAT", isErrSyntax)
+		test("invalid bool", "BOOL", isErrSyntax)
+		test("invalid duration", "DURATION", isInvalidDuration)
+		test("invalid unmarshaler", "UNMARSHALER", asParseError)
+		test("invalid slice", "SLICE", asParseError)
 	})
 }
