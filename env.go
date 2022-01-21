@@ -4,6 +4,7 @@ package env
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"strings"
@@ -80,6 +81,7 @@ func (e *NotSetError) Error() string {
 // function-level options:
 //  WithPrefix:         set prefix for each environment variable
 //  WithSliceSeparator: set custom separator to parse slice values
+//  WithUsageOnError:   enable a usage message printing when an error occurs
 // See their documentation for details.
 func Load(dst interface{}, opts ...Option) error {
 	return newLoader(OS, opts...).loadVars(dst)
@@ -106,11 +108,20 @@ func WithSliceSeparator(sep string) Option {
 	return func(l *loader) { l.sliceSep = sep }
 }
 
+// WithUsageOnError configures Load/LoadFrom to write an auto-generated usage
+// message to the provided io.Writer, if an error occurs while loading
+// environment variables. The message format can be changed by assigning the
+// global Usage variable to a custom implementation.
+func WithUsageOnError(w io.Writer) Option {
+	return func(l *loader) { l.usageOutput = w }
+}
+
 // loader is an environment variables loader.
 type loader struct {
-	provider Provider
-	prefix   string
-	sliceSep string
+	provider    Provider
+	prefix      string
+	sliceSep    string
+	usageOutput io.Writer
 }
 
 // newLoader creates a new loader with the specified Provider and applies the
@@ -128,7 +139,7 @@ func newLoader(p Provider, opts ...Option) *loader {
 }
 
 // loadVars loads environment variables into the provided struct.
-func (l *loader) loadVars(dst interface{}) error {
+func (l *loader) loadVars(dst interface{}) (err error) {
 	rv := reflect.ValueOf(dst)
 	if !structPtr(rv) {
 		return ErrInvalidArgument
@@ -139,20 +150,25 @@ func (l *loader) loadVars(dst interface{}) error {
 		return err
 	}
 
+	defer func() {
+		if err != nil && l.usageOutput != nil {
+			Usage(l.usageOutput, vars)
+		}
+	}()
+
 	// accumulate missing required variables
 	// to return NotSetError after the iteration is finished.
 	var notset []string
 
 	for _, v := range vars {
-		value, ok := l.lookupEnv(v.name, v.expand)
+		value, ok := l.lookupEnv(v.Name, v.Expand)
 		if !ok {
-			if v.required {
-				notset = append(notset, v.name)
+			if v.Required {
+				notset = append(notset, v.Name)
 			}
 			continue
 		}
 
-		var err error
 		if kindOf(v.field, reflect.Slice) && !implements(v.field, unmarshalerIface) {
 			err = setSlice(v.field, strings.Split(value, l.sliceSep))
 		} else {
@@ -172,8 +188,8 @@ func (l *loader) loadVars(dst interface{}) error {
 
 // parseVars parses environment variables from the fields of the provided
 // struct.
-func (l *loader) parseVars(v reflect.Value) ([]variable, error) {
-	var vars []variable
+func (l *loader) parseVars(v reflect.Value) ([]Var, error) {
+	var vars []Var
 
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
@@ -217,10 +233,18 @@ func (l *loader) parseVars(v reflect.Value) ([]variable, error) {
 			}
 		}
 
-		vars = append(vars, variable{
-			name:     l.prefix + name,
-			required: required,
-			expand:   expand,
+		var defValue string
+		if !required {
+			defValue = fmt.Sprintf("%v", field.Interface())
+		}
+
+		vars = append(vars, Var{
+			Name:     l.prefix + name,
+			Type:     field.Type().String(),
+			Desc:     sf.Tag.Get("desc"),
+			Default:  defValue,
+			Required: required,
+			Expand:   expand,
 			field:    field,
 		})
 	}
@@ -247,13 +271,4 @@ func (l *loader) lookupEnv(key string, expand bool) (string, bool) {
 	}
 
 	return os.Expand(value, mapping), true
-}
-
-// variable contains information about an environment variable parsed from a
-// struct field.
-type variable struct {
-	name     string
-	required bool
-	expand   bool
-	field    reflect.Value // the original struct field.
 }

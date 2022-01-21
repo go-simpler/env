@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/junk1tm/env"
 )
@@ -53,15 +54,17 @@ func ExampleLoad_nestedStruct() {
 
 //nolint:gocritic
 func ExampleLoad_required() {
+	// os.Setenv("HOST", "localhost")
 	// os.Setenv("PORT", "8080")
 
 	var cfg struct {
-		Port int `env:"PORT,required"`
+		Host string `env:"HOST,required"`
+		Port int    `env:"PORT,required"`
 	}
 	if err := env.Load(&cfg); err != nil {
 		var notSetErr *env.NotSetError
 		if errors.As(err, &notSetErr) {
-			fmt.Println(notSetErr.Names) // [PORT]
+			fmt.Println(notSetErr.Names) // [HOST PORT]
 		}
 	}
 }
@@ -119,4 +122,32 @@ func ExampleWithSliceSeparator() {
 	fmt.Println(cfg.Ports[0]) // 8080
 	fmt.Println(cfg.Ports[1]) // 8081
 	fmt.Println(cfg.Ports[2]) // 8082
+}
+
+//nolint:gocritic
+func ExampleWithUsageOnError() {
+	// os.Setenv("DB_HOST", "localhost")
+	// os.Setenv("DB_PORT", "5432")
+
+	cfg := struct {
+		DB struct {
+			Host string `env:"DB_HOST,required" desc:"database host"`
+			Port int    `env:"DB_PORT,required" desc:"database port"`
+		}
+		HTTPPort int             `env:"HTTP_PORT" desc:"http server port"`
+		Timeouts []time.Duration `env:"TIMEOUTS" desc:"timeout steps"`
+	}{
+		HTTPPort: 8080,
+		Timeouts: []time.Duration{1 * time.Second, 2 * time.Second, 3 * time.Second},
+	}
+	if err := env.Load(&cfg, env.WithUsageOnError(os.Stdout)); err != nil {
+		// handle error
+	}
+
+	// Output:
+	// Usage:
+	//   DB_HOST    string           required            database host
+	//   DB_PORT    int              required            database port
+	//   HTTP_PORT  int              default 8080        http server port
+	//   TIMEOUTS   []time.Duration  default [1s 2s 3s]  timeout steps
 }
