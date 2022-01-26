@@ -9,25 +9,28 @@
 
 > A lightweight package for loading environment variables into structs
 
-## About
+## 📌 About
 
 This package is made for apps that [store config in environment variables][12factor]. Its purpose is to replace multiple
 fragmented `os.Getenv` calls in `main.go` with a single struct definition, which simplifies config management and
 improves code readability.
 
-## Install
+## 📦 Install
 
 ```
 go get github.com/junk1tm/env
 ```
 
-## Features
+## 🚀 Features
 
 * Simple API
 * Dependency-free
-* Lightweight yet [customizable](#customization)
+* Custom [providers](#provider)
+* Global [prefix option](#prefix)
+* Per-variable [options](#tag-level-options): `required`, `expand`
+* Auto-generated [usage message](#usage-on-error)
 
-## Usage
+## ⚙️ Usage
 
 `Load` is the main function of this package. It loads environment variables into the provided struct.
 
@@ -100,7 +103,7 @@ if err := env.Load(&cfg); err != nil {
 fmt.Println(cfg.HTTP.Port) // 8080
 ```
 
-## Customization
+## ✨ Customization
 
 ### Provider
 
@@ -248,6 +251,37 @@ if err := env.Load(&cfg, env.WithUsageOnError(os.Stdout)); err != nil {
 //   TIMEOUTS   []time.Duration  default [1s 2s 3s]  timeout steps
 ```
 
+## ❓ FAQ
+
+**Why force writing the name of the corresponding environment variable for each struct field instead of generating it
+from the field's name automatically?**
+
+It feels too magical. Remember:
+
+> [Clear is better than clever][go-proverbs]
+
+By writing the `env` tags just once, you free yourself (and the readers of your code) from having to mentally convert
+field names from `CamelCame` to `UPPER_SNAKE_CASE` each time you need to list the environment variables used in your
+project.
+
+Bonus: `Goland` IDE users are able to configure [live templates][live-templates] for struct tags under the
+`Preferences | Editor | Live Templates` settings. Simply duplicate the builtin `json` template, rename it to `env` and
+replace the `FIELD_NAME` variable expression with `capitalizeAndUnderscore(fieldName())`. Autocompletion for the `env`
+struct tag should work now!
+
+**What about loading from `.env` files for local development?**
+
+Currently, it's not the feature of this package, but there is a few options available. You can run
+`export $(cat .env | xargs)` before starting your program, use a directory-based autoloading shell extension
+(e.g. [`direnv`][direnv]) or combine `env` with the [`godotenv`][godotenv] package:
+
+```go
+import (
+	_ "github.com/joho/godotenv/autoload" // loads .env file automatically
+	"github.com/junk1tm/env"
+)
+```
+
 [ci]: https://github.com/junk1tm/env/actions/workflows/go.yml
 [ci-img]: https://github.com/junk1tm/env/actions/workflows/go.yml/badge.svg
 [docs]: https://pkg.go.dev/github.com/junk1tm/env
@@ -261,3 +295,7 @@ if err := env.Load(&cfg, env.WithUsageOnError(os.Stdout)); err != nil {
 [release]: https://github.com/junk1tm/env/releases
 [release-img]: https://img.shields.io/github/v/release/junk1tm/env
 [12factor]: https://12factor.net/config
+[go-proverbs]: https://go-proverbs.github.io/
+[live-templates]: https://www.jetbrains.com/help/go/using-live-templates.html
+[direnv]: https://github.com/direnv/direnv
+[godotenv]: https://github.com/joho/godotenv
