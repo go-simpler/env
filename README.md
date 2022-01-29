@@ -1,5 +1,6 @@
 # env
 
+[![awesome-img]][awesome]
 [![ci-img]][ci]
 [![docs-img]][docs]
 [![report-img]][report]
@@ -282,6 +283,8 @@ import (
 )
 ```
 
+[awesome]: https://github.com/avelino/awesome-go#configuration
+[awesome-img]: https://awesome.re/mentioned-badge.svg
 [ci]: https://github.com/junk1tm/env/actions/workflows/go.yml
 [ci-img]: https://github.com/junk1tm/env/actions/workflows/go.yml/badge.svg
 [docs]: https://pkg.go.dev/github.com/junk1tm/env
