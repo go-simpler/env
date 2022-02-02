@@ -49,7 +49,7 @@ func structPtr(v reflect.Value) bool {
 	return v.IsValid() && v.Kind() == reflect.Ptr && v.Elem().Kind() == reflect.Struct && !v.IsNil()
 }
 
-// setValue parses s based on v's type/kind and sets v's underlying field to the
+// setValue parses s based on v's type/kind and sets v's underlying value to the
 // result.
 func setValue(v reflect.Value, s string) error {
 	switch {
@@ -72,7 +72,7 @@ func setValue(v reflect.Value, s string) error {
 	}
 }
 
-// setInt parses an int field from s and sets v's underlying field to it.
+// setInt parses an int value from s and sets v's underlying value to it.
 func setInt(v reflect.Value, s string) error {
 	bits := v.Type().Bits()
 	i, err := strconv.ParseInt(s, 10, bits)
@@ -83,7 +83,7 @@ func setInt(v reflect.Value, s string) error {
 	return nil
 }
 
-// setUint parses an uint field from s and sets v's underlying field to it.
+// setUint parses an uint value from s and sets v's underlying value to it.
 func setUint(v reflect.Value, s string) error {
 	bits := v.Type().Bits()
 	u, err := strconv.ParseUint(s, 10, bits)
@@ -94,7 +94,7 @@ func setUint(v reflect.Value, s string) error {
 	return nil
 }
 
-// setFloat parses a float field from s and sets v's underlying field to it.
+// setFloat parses a float value from s and sets v's underlying value to it.
 func setFloat(v reflect.Value, s string) error {
 	bits := v.Type().Bits()
 	f, err := strconv.ParseFloat(s, bits)
@@ -105,7 +105,7 @@ func setFloat(v reflect.Value, s string) error {
 	return nil
 }
 
-// setBool parses a bool field from s and sets v's underlying field to it.
+// setBool parses a bool value from s and sets v's underlying value to it.
 func setBool(v reflect.Value, s string) error {
 	b, err := strconv.ParseBool(s)
 	if err != nil {
@@ -115,13 +115,13 @@ func setBool(v reflect.Value, s string) error {
 	return nil
 }
 
-// setString sets v's underlying field to s.
+// setString sets v's underlying value to s.
 func setString(v reflect.Value, s string) error {
 	v.SetString(s)
 	return nil
 }
 
-// setDuration parses a duration field from s and sets v's underlying field to
+// setDuration parses a duration value from s and sets v's underlying value to
 // it.
 func setDuration(v reflect.Value, s string) error {
 	d, err := time.ParseDuration(s)
@@ -142,7 +142,7 @@ func setUnmarshaler(v reflect.Value, s string) error {
 }
 
 // setSlice creates a new slice of the values parsed from s and sets v's
-// underlying field to it.
+// underlying value to it.
 func setSlice(v reflect.Value, s []string) error {
 	slice := reflect.MakeSlice(v.Type(), len(s), cap(s))
 	for i := 0; i < slice.Len(); i++ {

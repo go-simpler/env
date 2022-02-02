@@ -1,4 +1,5 @@
 // Package env provides an API for loading environment variables into structs.
+// See the Load function documentation for details.
 package env
 
 import (
@@ -42,7 +43,7 @@ func (e *NotSetError) Error() string {
 }
 
 // Load loads environment variables into the provided struct using the OS
-// Provider as their source. To specify a custom Provider, use LoadFrom
+// Provider as their source. To specify a custom Provider, use the LoadFrom
 // function. dst must be a non-nil struct pointer, otherwise Load returns
 // ErrInvalidArgument.
 //
@@ -93,7 +94,7 @@ func LoadFrom(p Provider, dst interface{}, opts ...Option) error {
 	return newLoader(p, opts...).loadVars(dst)
 }
 
-// Option allows to customize the behaviour of Load/LoadFrom functions.
+// Option allows to customize the behaviour of the Load/LoadFrom functions.
 type Option func(*loader)
 
 // WithPrefix configures Load/LoadFrom to automatically add the provided prefix

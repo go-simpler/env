@@ -8,7 +8,7 @@ import (
 )
 
 // Var contains information about the environment variable parsed from a struct
-// field. It is exported as a part of the Usage signature.
+// field. It is exported as a part of the Usage function signature.
 type Var struct {
 	Name     string // Name is the full name of the variable, including prefix.
 	Type     string // Type is the name of the variable's type.
