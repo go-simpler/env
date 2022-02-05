@@ -10,12 +10,12 @@ import (
 // Var contains information about the environment variable parsed from a struct
 // field. It is exported as a part of the Usage function signature.
 type Var struct {
-	Name     string // Name is the full name of the variable, including prefix.
-	Type     string // Type is the name of the variable's type.
-	Desc     string // Desc is an optional description parsed from the `desc` tag.
-	Default  string // Default is the default value of the variable. If the variable is marked as required, it will be empty.
-	Required bool   // Required is true, if the variable is marked as required.
-	Expand   bool   // Expand is true, if the variable is marked to be expanded with os.Expand.
+	Name     string       // Name is the full name of the variable, including prefix.
+	Type     reflect.Type // Type is the variable's type.
+	Desc     string       // Desc is an optional description parsed from the `desc` tag.
+	Default  string       // Default is the default value of the variable. If the variable is marked as required, it will be empty.
+	Required bool         // Required is true, if the variable is marked as required.
+	Expand   bool         // Expand is true, if the variable is marked to be expanded with os.Expand.
 
 	field reflect.Value // the original struct field.
 }
@@ -34,6 +34,9 @@ var Usage = func(w io.Writer, vars []Var) {
 		if v.Required {
 			fmt.Fprintf(tw, "\trequired")
 		} else {
+			if v.Type.Kind() == reflect.String && v.Default == "" {
+				v.Default = "<empty>"
+			}
 			fmt.Fprintf(tw, "\tdefault %s", v.Default)
 		}
 		if v.Desc != "" {
