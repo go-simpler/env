@@ -241,7 +241,7 @@ func (l *loader) parseVars(v reflect.Value) ([]Var, error) {
 
 		vars = append(vars, Var{
 			Name:     l.prefix + name,
-			Type:     field.Type().String(),
+			Type:     field.Type(),
 			Desc:     sf.Tag.Get("desc"),
 			Default:  defValue,
 			Required: required,
