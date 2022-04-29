@@ -23,18 +23,18 @@ func ExampleLoad() {
 }
 
 func ExampleLoad_defaultValue() {
-	os.Setenv("PORT", "8081")
-
 	cfg := struct {
-		Port int `env:"PORT"`
+		Host string `env:"HOST" default:"localhost"` // either use the `default` tag...
+		Port int    `env:"PORT"`
 	}{
-		Port: 8080, // default value, will be overridden by PORT.
+		Port: 8080, // ...or initialize the struct field directly.
 	}
 	if err := env.Load(&cfg); err != nil {
 		// handle error
 	}
 
-	fmt.Println(cfg.Port) // 8081
+	fmt.Println(cfg.Host) // localhost
+	fmt.Println(cfg.Port) // 8080
 }
 
 func ExampleLoad_nestedStruct() {

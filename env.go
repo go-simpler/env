@@ -63,11 +63,11 @@ func (e *NotSetError) Error() string {
 //  slices of any type above (space is the default separator for values)
 // See the strconv package from the standard library for parsing rules.
 // Implementing the encoding.TextUnmarshaler interface is enough to use any
-// user-defined type. Default values can be specified using basic struct
-// initialization. They will be left untouched, if no corresponding environment
-// variables are found. Nested structs of any depth level are supported, but
-// only non-struct fields are considered as targets for parsing. If a field of
-// an unsupported type is found, the error will be ErrUnsupportedType.
+// user-defined type. Default values can be specified either using the `default`
+// struct tag (has a higher priority) or by initializing the struct fields
+// directly. Nested structs of any depth level are supported, but only
+// non-struct fields are considered as targets for parsing. If a field of an
+// unsupported type is found, the error will be ErrUnsupportedType.
 //
 // The name of the environment variable can be followed by comma-separated
 // options in the form of `env:"VAR,option1,option2,..."`. The following
@@ -158,16 +158,21 @@ func (l *loader) loadVars(dst interface{}) (err error) {
 	}()
 
 	// accumulate missing required variables
-	// to return NotSetError after the iteration is finished.
+	// to return NotSetError after the loop is finished.
 	var notset []string
 
 	for _, v := range vars {
 		value, ok := l.lookupEnv(v.Name, v.Expand)
 		if !ok {
+			// if the variable is required, mark it as missing and skip the iteration...
 			if v.Required {
 				notset = append(notset, v.Name)
+				continue
 			}
-			continue
+			// ...otherwise, use the default value.
+			// TODO(junk1tm): actually, there is no need to set a default value
+			//                if it has been obtained from the initialized struct field.
+			value = v.Default
 		}
 
 		if kindOf(v.field, reflect.Slice) && !implements(v.field, unmarshalerIface) {
@@ -236,7 +241,12 @@ func (l *loader) parseVars(v reflect.Value) ([]Var, error) {
 
 		var defValue string
 		if !required {
-			defValue = fmt.Sprintf("%v", field.Interface())
+			// the value from the `default` tag has a higher priority.
+			if value, ok := sf.Tag.Lookup("default"); ok {
+				defValue = value
+			} else {
+				defValue = fmt.Sprintf("%v", field.Interface())
+			}
 		}
 
 		vars = append(vars, Var{

@@ -67,22 +67,22 @@ See the `strconv` package from the standard library for parsing rules.
 
 ### Default values
 
-Default values can be specified using basic struct initialization. They will be left untouched, if no corresponding
-environment variables are found.
+Default values can be specified either using the `default` struct tag (has a higher priority) or by initializing the
+struct fields directly.
 
 ```go
-os.Setenv("PORT", "8081")
-
 cfg := struct {
-    Port int `env:"PORT"`
+    Host string `env:"HOST" default:"localhost"` // either use the `default` tag...
+    Port int    `env:"PORT"`
 }{
-    Port: 8080, // default value, will be overridden by PORT.
+    Port: 8080, // ...or initialize the struct field directly.
 }
 if err := env.Load(&cfg); err != nil {
     // handle error
 }
 
-fmt.Println(cfg.Port) // 8081
+fmt.Println(cfg.Host) // localhost
+fmt.Println(cfg.Port) // 8080
 ```
 
 ### Nested structs
