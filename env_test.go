@@ -70,22 +70,19 @@ func TestLoadFrom(t *testing.T) {
 	})
 
 	t.Run("default values", func(t *testing.T) {
-		m := env.Map{"PORT": "8081"}
-
 		cfg := struct {
-			Host string `env:"HOST"`
-			Port int    `env:"PORT"`
+			Host string `env:"HOST" default:"localhost"`
+			Port int    `env:"PORT" default:"8080"`
 		}{
-			Host: "localhost", // must stay the same.
-			Port: 8080,        // must be overridden with 8081.
+			Port: 8000, // must be overridden with 8080 (from the `default` tag).
 		}
-		if err := env.LoadFrom(m, &cfg); err != nil {
+		if err := env.LoadFrom(env.Map{}, &cfg); err != nil {
 			t.Fatalf("got %v; want no error", err)
 		}
 		if cfg.Host != "localhost" {
 			t.Errorf("got %s; want localhost", cfg.Host)
 		}
-		if cfg.Port != 8081 {
+		if cfg.Port != 8080 {
 			t.Errorf("got %d; want 8080", cfg.Port)
 		}
 	})
@@ -191,7 +188,7 @@ func TestLoadFrom(t *testing.T) {
 	})
 
 	t.Run("with usage on error", func(t *testing.T) {
-		// restore the default usage after the test is finished.
+		// reset to the default usage after the test is finished.
 		usage := env.Usage
 		defer func() { env.Usage = usage }()
 
