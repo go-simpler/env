@@ -25,18 +25,11 @@ func TestProviderFunc_LookupEnv(t *testing.T) {
 		Bar int `env:"BAR,required"`
 		Baz int `env:"BAZ,required"`
 	}
-	if err := env.LoadFrom(f, &cfg); err != nil {
-		t.Fatalf("got %v; want no error", err)
-	}
-	if cfg.Foo != 1 {
-		t.Errorf("got %d; want 1", cfg.Foo)
-	}
-	if cfg.Bar != 2 {
-		t.Errorf("got %d; want 2", cfg.Bar)
-	}
-	if cfg.Baz != 3 {
-		t.Errorf("got %d; want 3", cfg.Baz)
-	}
+	err := env.LoadFrom(f, &cfg)
+	noerr[F](t, err)
+	equal[E](t, cfg.Foo, 1)
+	equal[E](t, cfg.Bar, 2)
+	equal[E](t, cfg.Baz, 3)
 }
 
 func TestMap_LookupEnv(t *testing.T) {
@@ -51,16 +44,9 @@ func TestMap_LookupEnv(t *testing.T) {
 		Bar int `env:"BAR,required"`
 		Baz int `env:"BAZ,required"`
 	}
-	if err := env.LoadFrom(m, &cfg); err != nil {
-		t.Fatalf("got %v; want no error", err)
-	}
-	if cfg.Foo != 1 {
-		t.Errorf("got %d; want 1", cfg.Foo)
-	}
-	if cfg.Bar != 2 {
-		t.Errorf("got %d; want 2", cfg.Bar)
-	}
-	if cfg.Baz != 3 {
-		t.Errorf("got %d; want 3", cfg.Baz)
-	}
+	err := env.LoadFrom(m, &cfg)
+	noerr[F](t, err)
+	equal[E](t, cfg.Foo, 1)
+	equal[E](t, cfg.Bar, 2)
+	equal[E](t, cfg.Baz, 3)
 }
