@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"net"
-	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -14,11 +13,10 @@ import (
 
 func TestLoadFrom(t *testing.T) {
 	t.Run("invalid argument", func(t *testing.T) {
-		test := func(name string, dst interface{}) {
+		test := func(name string, dst any) {
 			t.Run(name, func(t *testing.T) {
-				if err := env.LoadFrom(env.Map{}, dst); !errors.Is(err, env.ErrInvalidArgument) {
-					t.Errorf("got %v; want %v", err, env.ErrInvalidArgument)
-				}
+				err := env.LoadFrom(env.Map{}, dst)
+				iserr[E](t, err, env.ErrInvalidArgument)
 			})
 		}
 
@@ -32,9 +30,8 @@ func TestLoadFrom(t *testing.T) {
 		var cfg struct {
 			Port string `env:""`
 		}
-		if err := env.LoadFrom(env.Map{}, &cfg); !errors.Is(err, env.ErrEmptyTagName) {
-			t.Errorf("got %v; want %v", err, env.ErrEmptyTagName)
-		}
+		err := env.LoadFrom(env.Map{}, &cfg)
+		iserr[E](t, err, env.ErrEmptyTagName)
 	})
 
 	t.Run("unsupported type", func(t *testing.T) {
@@ -43,9 +40,8 @@ func TestLoadFrom(t *testing.T) {
 		var cfg struct {
 			Port complex64 `env:"PORT"`
 		}
-		if err := env.LoadFrom(m, &cfg); !errors.Is(err, env.ErrUnsupportedType) {
-			t.Errorf("got %v; want %v", err, env.ErrUnsupportedType)
-		}
+		err := env.LoadFrom(m, &cfg)
+		iserr[E](t, err, env.ErrUnsupportedType)
 	})
 
 	t.Run("ignored fields", func(t *testing.T) {
@@ -58,15 +54,10 @@ func TestLoadFrom(t *testing.T) {
 			unexported string `env:"UNEXPORTED"`
 			MissingTag string
 		}
-		if err := env.LoadFrom(m, &cfg); err != nil {
-			t.Fatalf("got %v; want no error", err)
-		}
-		if cfg.unexported != "" {
-			t.Errorf("got %s; want empty string", cfg.unexported)
-		}
-		if cfg.MissingTag != "" {
-			t.Errorf("got %s; want empty string", cfg.MissingTag)
-		}
+		err := env.LoadFrom(m, &cfg)
+		noerr[F](t, err)
+		equal[E](t, cfg.unexported, "")
+		equal[E](t, cfg.MissingTag, "")
 	})
 
 	t.Run("default values", func(t *testing.T) {
@@ -76,15 +67,10 @@ func TestLoadFrom(t *testing.T) {
 		}{
 			Port: 8000, // must be overridden with 8080 (from the `default` tag).
 		}
-		if err := env.LoadFrom(env.Map{}, &cfg); err != nil {
-			t.Fatalf("got %v; want no error", err)
-		}
-		if cfg.Host != "localhost" {
-			t.Errorf("got %s; want localhost", cfg.Host)
-		}
-		if cfg.Port != 8080 {
-			t.Errorf("got %d; want 8080", cfg.Port)
-		}
+		err := env.LoadFrom(env.Map{}, &cfg)
+		noerr[F](t, err)
+		equal[E](t, cfg.Host, "localhost")
+		equal[E](t, cfg.Port, 8080)
 	})
 
 	t.Run("nested structs", func(t *testing.T) {
@@ -101,15 +87,10 @@ func TestLoadFrom(t *testing.T) {
 				Port int `env:"HTTP_PORT"`
 			}
 		}
-		if err := env.LoadFrom(m, &cfg); err != nil {
-			t.Fatalf("got %v; want no error", err)
-		}
-		if cfg.DB.Port != 5432 {
-			t.Errorf("got %d; want 5432", cfg.DB.Port)
-		}
-		if cfg.HTTP.Port != 8080 {
-			t.Errorf("got %d; want 8080", cfg.HTTP.Port)
-		}
+		err := env.LoadFrom(m, &cfg)
+		noerr[F](t, err)
+		equal[E](t, cfg.DB.Port, 5432)
+		equal[E](t, cfg.HTTP.Port, 8080)
 	})
 
 	t.Run("required tag option", func(t *testing.T) {
@@ -119,12 +100,9 @@ func TestLoadFrom(t *testing.T) {
 			Host string `env:"HOST,required"`
 			Port int    `env:"PORT,required"`
 		}
-		if err := env.LoadFrom(env.Map{}, &cfg); !errors.As(err, &notSetErr) {
-			t.Fatalf("got %T; want %T", err, notSetErr)
-		}
-		if !reflect.DeepEqual(notSetErr.Names, []string{"HOST", "PORT"}) {
-			t.Errorf("got %v; want [HOST PORT]", notSetErr.Names)
-		}
+		err := env.LoadFrom(env.Map{}, &cfg)
+		aserr[F](t, err, &notSetErr)
+		equal[E](t, notSetErr.Names, []string{"HOST", "PORT"})
 
 		// more coverage!
 		_ = notSetErr.Error()
@@ -140,12 +118,9 @@ func TestLoadFrom(t *testing.T) {
 		var cfg struct {
 			Addr string `env:"ADDR,expand"`
 		}
-		if err := env.LoadFrom(m, &cfg); err != nil {
-			t.Fatalf("got %v; want no error", err)
-		}
-		if cfg.Addr != "localhost:8080" {
-			t.Errorf("got %s; want localhost:8080", cfg.Addr)
-		}
+		err := env.LoadFrom(m, &cfg)
+		noerr[F](t, err)
+		equal[E](t, cfg.Addr, "localhost:8080")
 	})
 
 	t.Run("invalid tag option", func(t *testing.T) {
@@ -154,9 +129,8 @@ func TestLoadFrom(t *testing.T) {
 				Port string `env:"HTTP_PORT,foo"`
 			}
 		}
-		if err := env.LoadFrom(env.Map{}, &cfg); !errors.Is(err, env.ErrInvalidTagOption) {
-			t.Errorf("got %v; want %v", err, env.ErrInvalidTagOption)
-		}
+		err := env.LoadFrom(env.Map{}, &cfg)
+		iserr[E](t, err, env.ErrInvalidTagOption)
 	})
 
 	t.Run("with prefix", func(t *testing.T) {
@@ -165,12 +139,9 @@ func TestLoadFrom(t *testing.T) {
 		var cfg struct {
 			Port int `env:"PORT"`
 		}
-		if err := env.LoadFrom(m, &cfg, env.WithPrefix("APP_")); err != nil {
-			t.Fatalf("got %v; want no error", err)
-		}
-		if cfg.Port != 8080 {
-			t.Errorf("got %d; want 8080", cfg.Port)
-		}
+		err := env.LoadFrom(m, &cfg, env.WithPrefix("APP_"))
+		noerr[F](t, err)
+		equal[E](t, cfg.Port, 8080)
 	})
 
 	t.Run("with slice separator", func(t *testing.T) {
@@ -179,12 +150,9 @@ func TestLoadFrom(t *testing.T) {
 		var cfg struct {
 			Ports []int `env:"PORTS"`
 		}
-		if err := env.LoadFrom(m, &cfg, env.WithSliceSeparator(";")); err != nil {
-			t.Fatalf("got %v; want no error", err)
-		}
-		if want := []int{8080, 8081, 8082}; !reflect.DeepEqual(cfg.Ports, want) {
-			t.Errorf("got %v; want %v", cfg.Ports, want)
-		}
+		err := env.LoadFrom(m, &cfg, env.WithSliceSeparator(";"))
+		noerr[F](t, err)
+		equal[E](t, cfg.Ports, []int{8080, 8081, 8082})
 	})
 
 	t.Run("with usage on error", func(t *testing.T) {
@@ -200,12 +168,9 @@ func TestLoadFrom(t *testing.T) {
 		var cfg struct {
 			Port int `env:"PORT,required"`
 		}
-		if err := env.LoadFrom(env.Map{}, &cfg, env.WithUsageOnError(io.Discard)); err == nil {
-			t.Fatalf("want an error")
-		}
-		if !called {
-			t.Errorf("want usage to be called")
-		}
+		err := env.LoadFrom(env.Map{}, &cfg, env.WithUsageOnError(io.Discard))
+		aserr[F](t, err, new(*env.NotSetError))
+		equal[E](t, called, true)
 	})
 
 	t.Run("all supported types", func(t *testing.T) {
@@ -262,15 +227,12 @@ func TestLoadFrom(t *testing.T) {
 			IP        net.IP          `env:"IP"`
 			IPs       []net.IP        `env:"IPS"`
 		}
-		if err := env.LoadFrom(m, &cfg); err != nil {
-			t.Fatalf("got %v; want no error", err)
-		}
+		err := env.LoadFrom(m, &cfg)
+		noerr[F](t, err)
 
-		test := func(name string, got, want interface{}) {
+		test := func(name string, got, want any) {
 			t.Run(name, func(t *testing.T) {
-				if !reflect.DeepEqual(got, want) {
-					t.Errorf("got %v; want %v", got, want)
-				}
+				equal[E](t, got, want)
 			})
 		}
 
@@ -324,9 +286,8 @@ func TestLoadFrom(t *testing.T) {
 					Unmarshaler net.IP        `env:"UNMARSHALER"`
 					Slice       []net.IP      `env:"SLICE"`
 				}
-				if err := env.LoadFrom(m, &cfg); !checkErr(err) {
-					t.Errorf("want checkErr to pass")
-				}
+				err := env.LoadFrom(m, &cfg)
+				equal[E](t, checkErr(err), true)
 			})
 		}
 
