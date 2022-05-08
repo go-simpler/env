@@ -13,7 +13,7 @@ linters:
     - unused
     - varcheck
     # disabled by default:
-    - gocritic
+    # - gocritic TODO(junk1tm): enable when github.com/go-critic/go-critic/issues/1193 is closed
     - gofumpt
 
 linters-settings:

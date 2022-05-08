@@ -84,13 +84,13 @@ func (e *NotSetError) Error() string {
 //  WithSliceSeparator: set custom separator to parse slice values
 //  WithUsageOnError:   enable a usage message printing when an error occurs
 // See their documentation for details.
-func Load(dst interface{}, opts ...Option) error {
+func Load(dst any, opts ...Option) error {
 	return newLoader(OS, opts...).loadVars(dst)
 }
 
 // LoadFrom loads environment variables into the provided struct using the
 // specified Provider as their source. See Load documentation for more details.
-func LoadFrom(p Provider, dst interface{}, opts ...Option) error {
+func LoadFrom(p Provider, dst any, opts ...Option) error {
 	return newLoader(p, opts...).loadVars(dst)
 }
 
@@ -140,7 +140,7 @@ func newLoader(p Provider, opts ...Option) *loader {
 }
 
 // loadVars loads environment variables into the provided struct.
-func (l *loader) loadVars(dst interface{}) (err error) {
+func (l *loader) loadVars(dst any) (err error) {
 	rv := reflect.ValueOf(dst)
 	if !structPtr(rv) {
 		return ErrInvalidArgument
