@@ -220,6 +220,26 @@ fmt.Println(cfg.Ports[1]) // 8081
 fmt.Println(cfg.Ports[2]) // 8082
 ```
 
+#### Strict mode
+
+For cases where most environment variables are required, strict mode is available, in which all variables without the
+`default` tag are treated as required. To enable this mode, use the `WithStrictMode` option:
+
+```go
+// os.Setenv("HOST", "localhost")
+
+var cfg struct {
+	Host string `env:"HOST"` // (required)
+	Port int    `env:"PORT" default:"8080"`
+}
+if err := env.Load(&cfg, env.WithStrictMode()); err != nil {
+	var notSetErr *env.NotSetError
+	if errors.As(err, &notSetErr) {
+		fmt.Println(notSetErr.Names) // [HOST]
+	}
+}
+```
+
 #### Usage on error
 
 `env` supports printing an auto-generated usage message the same way the `flag` package does it. It will be printed if
