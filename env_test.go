@@ -155,6 +155,18 @@ func TestLoadFrom(t *testing.T) {
 		equal[E](t, cfg.Ports, []int{8080, 8081, 8082})
 	})
 
+	t.Run("with strict mode", func(t *testing.T) {
+		var notSetErr *env.NotSetError
+
+		var cfg struct {
+			Host string `env:"HOST"`
+			Port int    `env:"PORT" default:"8080"`
+		}
+		err := env.LoadFrom(env.Map{}, &cfg, env.WithStrictMode())
+		aserr[F](t, err, &notSetErr)
+		equal[E](t, notSetErr.Names, []string{"HOST"})
+	})
+
 	t.Run("with usage on error", func(t *testing.T) {
 		// reset to the default usage after the test is finished.
 		usage := env.Usage

@@ -82,6 +82,7 @@ func (e *NotSetError) Error() string {
 // function-level options:
 //  WithPrefix:         set prefix for each environment variable
 //  WithSliceSeparator: set custom separator to parse slice values
+//  WithStrictMode:     enable strict mode: no `default` tag == required
 //  WithUsageOnError:   enable a usage message printing when an error occurs
 // See their documentation for details.
 func Load(dst any, opts ...Option) error {
@@ -109,6 +110,12 @@ func WithSliceSeparator(sep string) Option {
 	return func(l *loader) { l.sliceSep = sep }
 }
 
+// WithStrictMode configures Load/LoadFrom to treat all environment variables
+// without the `default` tag as required. By default, strict mode is disabled.
+func WithStrictMode() Option {
+	return func(l *loader) { l.strictMode = true }
+}
+
 // WithUsageOnError configures Load/LoadFrom to write an auto-generated usage
 // message to the provided io.Writer, if an error occurs while loading
 // environment variables. The message format can be changed by assigning the
@@ -122,6 +129,7 @@ type loader struct {
 	provider    Provider
 	prefix      string
 	sliceSep    string
+	strictMode  bool
 	usageOutput io.Writer
 }
 
@@ -129,9 +137,11 @@ type loader struct {
 // provided options, which override the default settings.
 func newLoader(p Provider, opts ...Option) *loader {
 	l := loader{
-		provider: p,
-		prefix:   "",
-		sliceSep: " ",
+		provider:    p,
+		prefix:      "",
+		sliceSep:    " ",
+		strictMode:  false,
+		usageOutput: nil,
 	}
 	for _, opt := range opts {
 		opt(&l)
@@ -239,14 +249,20 @@ func (l *loader) parseVars(v reflect.Value) ([]Var, error) {
 			}
 		}
 
-		var defValue string
-		if !required {
-			// the value from the `default` tag has a higher priority.
-			if value, ok := sf.Tag.Lookup("default"); ok {
-				defValue = value
-			} else {
-				defValue = fmt.Sprintf("%v", field.Interface())
-			}
+		// the value from the `default` tag has a higher priority.
+		defValue, defSet := sf.Tag.Lookup("default")
+		if !defSet {
+			defValue = fmt.Sprintf("%v", field.Interface())
+		}
+
+		// strict mode only: no `default` tag means the variable is required.
+		if l.strictMode && !defSet {
+			required = true
+		}
+
+		// the variable is either required or has a default value, but not both.
+		if required {
+			defValue = ""
 		}
 
 		vars = append(vars, Var{
