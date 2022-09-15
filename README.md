@@ -14,9 +14,10 @@ A lightweight package for loading environment variables into structs
 
 ## 📌 About
 
-This package is made for apps that [store config in environment variables][12factor]. Its purpose is to replace multiple
-fragmented `os.Getenv` calls in `main.go` with a single struct definition, which simplifies config management and
-improves code readability.
+This package is made for apps that [store config in environment variables][1].
+Its purpose is to replace multiple fragmented `os.Getenv` calls in `main.go`
+with a single struct definition, which simplifies config management and improves
+code readability.
 
 ## 📦 Install
 
@@ -35,10 +36,12 @@ go get github.com/junk1tm/env
 
 ## ⚙️ Usage
 
-`Load` is the main function of this package. It loads environment variables into the provided struct.
+`Load` is the main function of this package. It loads environment variables into
+the provided struct.
 
-The struct fields must have the `env:"VAR"` struct tag, where `VAR` is the name of the corresponding environment
-variable. Unexported fields and fields without this tag (except nested structs) are ignored.
+The struct fields must have the `env:"VAR"` struct tag, where `VAR` is the name
+of the corresponding environment variable. Unexported fields and fields without
+this tag (except nested structs) are ignored.
 
 ```go
 os.Setenv("PORT", "8080")
@@ -69,8 +72,8 @@ See the `strconv` package from the standard library for parsing rules.
 
 ### Default values
 
-Default values can be specified either using the `default` struct tag (has a higher priority) or by initializing the
-struct fields directly.
+Default values can be specified either using the `default` struct tag (has a
+higher priority) or by initializing the struct fields directly.
 
 ```go
 cfg := struct {
@@ -89,7 +92,8 @@ fmt.Println(cfg.Port) // 8080
 
 ### Nested structs
 
-Nested structs of any depth level are supported, but only non-struct fields are considered as targets for parsing.
+Nested structs of any depth level are supported, but only non-struct fields are
+considered as targets for parsing.
 
 ```go
 os.Setenv("HTTP_PORT", "8080")
@@ -110,8 +114,9 @@ fmt.Println(cfg.HTTP.Port) // 8080
 
 ### Provider
 
-`Load` retrieves environment variables values directly from OS. To use a different source, try `LoadFrom` that accepts
-an implementation of the `Provider` interface as the first argument.
+`Load` retrieves environment variables values directly from OS. To use a
+different source, try `LoadFrom` that accepts an implementation of the
+`Provider` interface as the first argument.
 
 ```go
 // Provider represents an entity that is able to provide environment variables.
@@ -122,7 +127,7 @@ type Provider interface {
 }
 ```
 
-`Map` is a builtin `Provider` implementation that might be useful in tests.
+`Map` is a built-in `Provider` implementation that might be useful in tests.
 
 ```go
 m := env.Map{"PORT": "8080"}
@@ -139,13 +144,14 @@ fmt.Println(cfg.Port) // 8080
 
 ### Tag-level options
 
-The name of the environment variable can be followed by comma-separated options in the form
-of `env:"VAR,option1,option2,..."`. The following tag-level options are supported:
+The name of the environment variable can be followed by comma-separated options
+in the form of `env:"VAR,option1,option2,..."`. The following tag-level options
+are supported:
 
 #### Required
 
-Use the `required` option to mark the environment variable as required. In case no such variable is found, an error of
-type `NotSetError` will be returned.
+Use the `required` option to mark the environment variable as required. In case
+no such variable is found, an error of type `NotSetError` will be returned.
 
 ```go
 // os.Setenv("HOST", "localhost")
@@ -165,7 +171,8 @@ if err := env.Load(&cfg); err != nil {
 
 #### Expand
 
-Use the `expand` option to automatically expand the value of the environment variable using `os.Expand`.
+Use the `expand` option to automatically expand the value of the environment
+variable using `os.Expand`.
 
 ```go
 os.Setenv("PORT", "8080")
@@ -183,12 +190,13 @@ fmt.Println(cfg.Addr) // localhost:8080
 
 ### Function-level options
 
-In addition to the tag-level options, `Load` also supports the following function-level options:
+In addition to the tag-level options, `Load` also supports the following
+function-level options:
 
 #### Prefix
 
-It is a common practise to prefix app's environment variables with some string (e.g., its name). Such a prefix can be
-set using the `WithPrefix` option:
+It is a common practice to prefix app's environment variables with some string
+(e.g., its name). Such a prefix can be set using the `WithPrefix` option:
 
 ```go
 os.Setenv("APP_PORT", "8080")
@@ -205,7 +213,8 @@ fmt.Println(cfg.Port) // 8080
 
 #### Slice separator
 
-Space is the default separator when parsing slice values. It can be changed using the `WithSliceSeparator` option:
+Space is the default separator when parsing slice values. It can be changed
+using the `WithSliceSeparator` option:
 
 ```go
 os.Setenv("PORTS", "8080;8081;8082")
@@ -224,8 +233,9 @@ fmt.Println(cfg.Ports[2]) // 8082
 
 #### Strict mode
 
-For cases where most environment variables are required, strict mode is available, in which all variables without the
-`default` tag are treated as required. To enable this mode, use the `WithStrictMode` option:
+For cases where most environment variables are required, strict mode is
+available, in which all variables without the `default` tag are treated as
+required. To enable this mode, use the `WithStrictMode` option:
 
 ```go
 // os.Setenv("HOST", "localhost")
@@ -244,8 +254,9 @@ if err := env.Load(&cfg, env.WithStrictMode()); err != nil {
 
 #### Usage on error
 
-`env` supports printing an auto-generated usage message the same way the `flag` package does it. It will be printed if
-the `WithUsageOnError` option is provided and an error occurs while loading environment variables:
+`env` supports printing an auto-generated usage message the same way the `flag`
+package does it. It will be printed if the `WithUsageOnError` option is
+provided and an error occurs while loading environment variables:
 
 ```go
 // os.Setenv("DB_HOST", "localhost")
@@ -305,7 +316,8 @@ import (
 )
 ```
 
-[12factor]: https://12factor.net/config
+[1]: https://12factor.net/config
+
 [go-proverbs]: https://go-proverbs.github.io/
 [live-templates]: https://www.jetbrains.com/help/go/using-live-templates.html
 [direnv]: https://github.com/direnv/direnv
