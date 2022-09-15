@@ -56,6 +56,9 @@ if err := env.Load(&cfg); err != nil {
 fmt.Println(cfg.Port) // 8080
 ```
 
+Why not just resolve the name automatically, like `toUpperSnakeCase(fieldName)`?
+It feels [too clever][2] to me :)
+
 ### Supported types
 
 The following types are supported as struct fields:
@@ -285,40 +288,5 @@ if err := env.Load(&cfg, env.WithUsageOnError(os.Stdout)); err != nil {
 //   TIMEOUTS   []time.Duration  default [1s 2s 3s]  timeout steps
 ```
 
-## ❓ FAQ
-
-**Why force writing the name of the corresponding environment variable for each struct field instead of generating it
-from the field's name automatically?**
-
-It feels too magical. Remember:
-
-> [Clear is better than clever][go-proverbs]
-
-By writing the `env` tags just once, you free yourself (and the readers of your code) from having to mentally convert
-field names from `CamelCame` to `UPPER_SNAKE_CASE` each time you need to list the environment variables used in your
-project.
-
-Bonus: `Goland` IDE users are able to configure [live templates][live-templates] for struct tags under the
-`Preferences | Editor | Live Templates` settings. Simply duplicate the builtin `json` template, rename it to `env` and
-replace the `FIELD_NAME` variable expression with `capitalizeAndUnderscore(fieldName())`. Autocompletion for the `env`
-struct tag should work now!
-
-**What about loading from `.env` files for local development?**
-
-Currently, it's not the feature of this package, but there is a few options available. You can run
-`export $(cat .env | xargs)` before starting your program, use a directory-based autoloading shell extension
-(e.g. [`direnv`][direnv]) or combine `env` with the [`godotenv`][godotenv] package:
-
-```go
-import (
-	_ "github.com/joho/godotenv/autoload" // loads .env file automatically
-	"github.com/junk1tm/env"
-)
-```
-
 [1]: https://12factor.net/config
-
-[go-proverbs]: https://go-proverbs.github.io/
-[live-templates]: https://www.jetbrains.com/help/go/using-live-templates.html
-[direnv]: https://github.com/direnv/direnv
-[godotenv]: https://github.com/joho/godotenv
+[2]: https://dave.cheney.net/2019/07/09/clear-is-better-than-clever
