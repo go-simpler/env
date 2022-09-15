@@ -1,14 +1,16 @@
-# env
+<div align="center">
 
-[![awesome-img]][awesome]
-[![ci-img]][ci]
-[![docs-img]][docs]
-[![report-img]][report]
-[![codecov-img]][codecov]
-[![license-img]][license]
-[![release-img]][release]
+![logo](logo.svg)
 
-> A lightweight package for loading environment variables into structs
+A lightweight package for loading environment variables into structs
+
+[![awesome](https://awesome.re/badge.svg)](https://github.com/avelino/awesome-go#configuration)
+[![ci](https://github.com/junk1tm/env/actions/workflows/go.yml/badge.svg)](https://github.com/junk1tm/env/actions/workflows/go.yml)
+[![docs](https://pkg.go.dev/badge/github.com/junk1tm/env.svg)](https://pkg.go.dev/github.com/junk1tm/env)
+[![report](https://goreportcard.com/badge/github.com/junk1tm/env)](https://goreportcard.com/badge/github.com/junk1tm/env)
+[![codecov](https://codecov.io/gh/junk1tm/env/branch/main/graph/badge.svg)](https://codecov.io/gh/junk1tm/env)
+
+</div>
 
 ## 📌 About
 
@@ -303,20 +305,6 @@ import (
 )
 ```
 
-[awesome]: https://github.com/avelino/awesome-go#configuration
-[awesome-img]: https://awesome.re/mentioned-badge.svg
-[ci]: https://github.com/junk1tm/env/actions/workflows/go.yml
-[ci-img]: https://github.com/junk1tm/env/actions/workflows/go.yml/badge.svg
-[docs]: https://pkg.go.dev/github.com/junk1tm/env
-[docs-img]: https://pkg.go.dev/badge/github.com/junk1tm/env.svg
-[report]: https://goreportcard.com/report/github.com/junk1tm/env
-[report-img]: https://goreportcard.com/badge/github.com/junk1tm/env
-[codecov]: https://codecov.io/gh/junk1tm/env
-[codecov-img]: https://codecov.io/gh/junk1tm/env/branch/main/graph/badge.svg
-[license]: https://github.com/junk1tm/env/blob/main/LICENSE
-[license-img]: https://img.shields.io/github/license/junk1tm/env
-[release]: https://github.com/junk1tm/env/releases
-[release-img]: https://img.shields.io/github/v/release/junk1tm/env
 [12factor]: https://12factor.net/config
 [go-proverbs]: https://go-proverbs.github.io/
 [live-templates]: https://www.jetbrains.com/help/go/using-live-templates.html
