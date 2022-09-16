@@ -54,13 +54,15 @@ func (e *NotSetError) Error() string {
 // ErrEmptyTagName.
 //
 // The following types are supported as struct fields:
-//  int (any kind)
-//  float (any kind)
-//  bool
-//  string
-//  time.Duration
-//  encoding.TextUnmarshaler
-//  slices of any type above (space is the default separator for values)
+//
+//	int (any kind)
+//	float (any kind)
+//	bool
+//	string
+//	time.Duration
+//	encoding.TextUnmarshaler
+//	slices of any type above (space is the default separator for values)
+//
 // See the strconv package from the standard library for parsing rules.
 // Implementing the encoding.TextUnmarshaler interface is enough to use any
 // user-defined type. Default values can be specified either using the `default`
@@ -72,18 +74,22 @@ func (e *NotSetError) Error() string {
 // The name of the environment variable can be followed by comma-separated
 // options in the form of `env:"VAR,option1,option2,..."`. The following
 // tag-level options are supported:
-//  required: mark the environment variable as required
-//  expand:   expand the value of the environment variable using os.Expand
+//
+//	required: mark the environment variable as required
+//	expand:   expand the value of the environment variable using os.Expand
+//
 // If environment variables are marked as required but not set, an error of type
 // NotSetError will be returned. If the tag contains an invalid option, the
 // error will be ErrInvalidTagOption.
 //
 // In addition to the tag-level options, Load also supports the following
 // function-level options:
-//  WithPrefix:         set prefix for each environment variable
-//  WithSliceSeparator: set custom separator to parse slice values
-//  WithStrictMode:     enable strict mode: no `default` tag == required
-//  WithUsageOnError:   enable a usage message printing when an error occurs
+//
+//	WithPrefix:         set prefix for each environment variable
+//	WithSliceSeparator: set custom separator to parse slice values
+//	WithStrictMode:     enable strict mode: no `default` tag == required
+//	WithUsageOnError:   enable a usage message printing when an error occurs
+//
 // See their documentation for details.
 func Load(dst any, opts ...Option) error {
 	return newLoader(OS, opts...).loadVars(dst)
