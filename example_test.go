@@ -124,6 +124,7 @@ func ExampleWithSliceSeparator() {
 	fmt.Println(cfg.Ports[2]) // 8082
 }
 
+//nolint:gocritic
 func ExampleWithStrictMode() {
 	// os.Setenv("HOST", "localhost")
 
