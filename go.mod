@@ -1,3 +1,3 @@
 module github.com/junk1tm/env
 
-go 1.18
+go 1.19
