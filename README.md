@@ -7,7 +7,7 @@ A lightweight package for loading environment variables into structs
 [![awesome](https://awesome.re/badge.svg)](https://github.com/avelino/awesome-go#configuration)
 [![ci](https://github.com/junk1tm/env/actions/workflows/go.yml/badge.svg)](https://github.com/junk1tm/env/actions/workflows/go.yml)
 [![docs](https://pkg.go.dev/badge/github.com/junk1tm/env.svg)](https://pkg.go.dev/github.com/junk1tm/env)
-[![report](https://goreportcard.com/badge/github.com/junk1tm/env)](https://goreportcard.com/badge/github.com/junk1tm/env)
+[![report](https://goreportcard.com/badge/github.com/junk1tm/env)](https://goreportcard.com/report/github.com/junk1tm/env)
 [![codecov](https://codecov.io/gh/junk1tm/env/branch/main/graph/badge.svg)](https://codecov.io/gh/junk1tm/env)
 
 </div>
