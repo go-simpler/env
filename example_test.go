@@ -52,7 +52,7 @@ func ExampleLoad_nestedStruct() {
 	fmt.Println(cfg.HTTP.Port) // 8080
 }
 
-//nolint:gocritic
+//nolint:gocritic //commentedOutCode
 func ExampleLoad_required() {
 	// os.Setenv("HOST", "localhost")
 	// os.Setenv("PORT", "8080")
@@ -124,7 +124,7 @@ func ExampleWithSliceSeparator() {
 	fmt.Println(cfg.Ports[2]) // 8082
 }
 
-//nolint:gocritic
+//nolint:gocritic //commentedOutCode
 func ExampleWithStrictMode() {
 	// os.Setenv("HOST", "localhost")
 
@@ -140,7 +140,7 @@ func ExampleWithStrictMode() {
 	}
 }
 
-//nolint:gocritic
+//nolint:gocritic //commentedOutCode
 func ExampleWithUsageOnError() {
 	// os.Setenv("DB_HOST", "localhost")
 	// os.Setenv("DB_PORT", "5432")
