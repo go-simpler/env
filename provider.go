@@ -9,19 +9,19 @@ type Provider interface {
 	LookupEnv(key string) (value string, ok bool)
 }
 
-// ProviderFunc is an adapter that allows using functions as Provider.
+// ProviderFunc is an adapter that allows using functions as [Provider].
 type ProviderFunc func(key string) (value string, ok bool)
 
-// LookupEnv implements the Provider interface.
+// LookupEnv implements the [Provider] interface.
 func (f ProviderFunc) LookupEnv(key string) (string, bool) { return f(key) }
 
-// OS is the main Provider that uses os.LookupEnv.
+// OS is the main [Provider] that uses [os.LookupEnv].
 var OS Provider = ProviderFunc(os.LookupEnv)
 
-// Map is an in-memory Provider implementation useful in tests.
+// Map is an in-memory [Provider] implementation useful in tests.
 type Map map[string]string
 
-// LookupEnv implements the Provider interface.
+// LookupEnv implements the [Provider] interface.
 func (m Map) LookupEnv(key string) (string, bool) {
 	value, ok := m[key]
 	return value, ok
