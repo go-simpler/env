@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/junk1tm/env"
+	"github.com/junk1tm/env/assert"
+	. "github.com/junk1tm/env/assert/dotimport"
 )
 
 func TestLoadFrom(t *testing.T) {
@@ -16,7 +18,7 @@ func TestLoadFrom(t *testing.T) {
 		test := func(name string, dst any) {
 			t.Run(name, func(t *testing.T) {
 				err := env.LoadFrom(env.Map{}, dst)
-				iserr[E](t, err, env.ErrInvalidArgument)
+				assert.IsErr[E](t, err, env.ErrInvalidArgument)
 			})
 		}
 
@@ -31,7 +33,7 @@ func TestLoadFrom(t *testing.T) {
 			Port string `env:""`
 		}
 		err := env.LoadFrom(env.Map{}, &cfg)
-		iserr[E](t, err, env.ErrEmptyTagName)
+		assert.IsErr[E](t, err, env.ErrEmptyTagName)
 	})
 
 	t.Run("unsupported type", func(t *testing.T) {
@@ -41,7 +43,7 @@ func TestLoadFrom(t *testing.T) {
 			Port complex64 `env:"PORT"`
 		}
 		err := env.LoadFrom(m, &cfg)
-		iserr[E](t, err, env.ErrUnsupportedType)
+		assert.IsErr[E](t, err, env.ErrUnsupportedType)
 	})
 
 	t.Run("ignored fields", func(t *testing.T) {
@@ -55,9 +57,9 @@ func TestLoadFrom(t *testing.T) {
 			MissingTag string
 		}
 		err := env.LoadFrom(m, &cfg)
-		noerr[F](t, err)
-		equal[E](t, cfg.unexported, "")
-		equal[E](t, cfg.MissingTag, "")
+		assert.NoErr[F](t, err)
+		assert.Equal[E](t, cfg.unexported, "")
+		assert.Equal[E](t, cfg.MissingTag, "")
 	})
 
 	t.Run("default values", func(t *testing.T) {
@@ -68,9 +70,9 @@ func TestLoadFrom(t *testing.T) {
 			Port: 8000, // must be overridden with 8080 (from the `default` tag).
 		}
 		err := env.LoadFrom(env.Map{}, &cfg)
-		noerr[F](t, err)
-		equal[E](t, cfg.Host, "localhost")
-		equal[E](t, cfg.Port, 8080)
+		assert.NoErr[F](t, err)
+		assert.Equal[E](t, cfg.Host, "localhost")
+		assert.Equal[E](t, cfg.Port, 8080)
 	})
 
 	t.Run("nested structs", func(t *testing.T) {
@@ -88,9 +90,9 @@ func TestLoadFrom(t *testing.T) {
 			}
 		}
 		err := env.LoadFrom(m, &cfg)
-		noerr[F](t, err)
-		equal[E](t, cfg.DB.Port, 5432)
-		equal[E](t, cfg.HTTP.Port, 8080)
+		assert.NoErr[F](t, err)
+		assert.Equal[E](t, cfg.DB.Port, 5432)
+		assert.Equal[E](t, cfg.HTTP.Port, 8080)
 	})
 
 	t.Run("required tag option", func(t *testing.T) {
@@ -101,8 +103,8 @@ func TestLoadFrom(t *testing.T) {
 			Port int    `env:"PORT,required"`
 		}
 		err := env.LoadFrom(env.Map{}, &cfg)
-		aserr[F](t, err, &notSetErr)
-		equal[E](t, notSetErr.Names, []string{"HOST", "PORT"})
+		assert.AsErr[F](t, err, &notSetErr)
+		assert.Equal[E](t, notSetErr.Names, []string{"HOST", "PORT"})
 
 		// more coverage!
 		_ = notSetErr.Error()
@@ -119,8 +121,8 @@ func TestLoadFrom(t *testing.T) {
 			Addr string `env:"ADDR,expand"`
 		}
 		err := env.LoadFrom(m, &cfg)
-		noerr[F](t, err)
-		equal[E](t, cfg.Addr, "localhost:8080")
+		assert.NoErr[F](t, err)
+		assert.Equal[E](t, cfg.Addr, "localhost:8080")
 	})
 
 	t.Run("invalid tag option", func(t *testing.T) {
@@ -130,7 +132,7 @@ func TestLoadFrom(t *testing.T) {
 			}
 		}
 		err := env.LoadFrom(env.Map{}, &cfg)
-		iserr[E](t, err, env.ErrInvalidTagOption)
+		assert.IsErr[E](t, err, env.ErrInvalidTagOption)
 	})
 
 	t.Run("with prefix", func(t *testing.T) {
@@ -140,8 +142,8 @@ func TestLoadFrom(t *testing.T) {
 			Port int `env:"PORT"`
 		}
 		err := env.LoadFrom(m, &cfg, env.WithPrefix("APP_"))
-		noerr[F](t, err)
-		equal[E](t, cfg.Port, 8080)
+		assert.NoErr[F](t, err)
+		assert.Equal[E](t, cfg.Port, 8080)
 	})
 
 	t.Run("with slice separator", func(t *testing.T) {
@@ -151,8 +153,8 @@ func TestLoadFrom(t *testing.T) {
 			Ports []int `env:"PORTS"`
 		}
 		err := env.LoadFrom(m, &cfg, env.WithSliceSeparator(";"))
-		noerr[F](t, err)
-		equal[E](t, cfg.Ports, []int{8080, 8081, 8082})
+		assert.NoErr[F](t, err)
+		assert.Equal[E](t, cfg.Ports, []int{8080, 8081, 8082})
 	})
 
 	t.Run("with strict mode", func(t *testing.T) {
@@ -163,8 +165,8 @@ func TestLoadFrom(t *testing.T) {
 			Port int    `env:"PORT" default:"8080"`
 		}
 		err := env.LoadFrom(env.Map{}, &cfg, env.WithStrictMode())
-		aserr[F](t, err, &notSetErr)
-		equal[E](t, notSetErr.Names, []string{"HOST"})
+		assert.AsErr[F](t, err, &notSetErr)
+		assert.Equal[E](t, notSetErr.Names, []string{"HOST"})
 	})
 
 	t.Run("with usage on error", func(t *testing.T) {
@@ -181,8 +183,8 @@ func TestLoadFrom(t *testing.T) {
 			Port int `env:"PORT,required"`
 		}
 		err := env.LoadFrom(env.Map{}, &cfg, env.WithUsageOnError(io.Discard))
-		aserr[F](t, err, new(*env.NotSetError))
-		equal[E](t, called, true)
+		assert.AsErr[F](t, err, new(*env.NotSetError))
+		assert.Equal[E](t, called, true)
 	})
 
 	t.Run("all supported types", func(t *testing.T) {
@@ -240,11 +242,11 @@ func TestLoadFrom(t *testing.T) {
 			IPs       []net.IP        `env:"IPS"`
 		}
 		err := env.LoadFrom(m, &cfg)
-		noerr[F](t, err)
+		assert.NoErr[F](t, err)
 
 		test := func(name string, got, want any) {
 			t.Run(name, func(t *testing.T) {
-				equal[E](t, got, want)
+				assert.Equal[E](t, got, want)
 			})
 		}
 
@@ -299,7 +301,7 @@ func TestLoadFrom(t *testing.T) {
 					Slice       []net.IP      `env:"SLICE"`
 				}
 				err := env.LoadFrom(m, &cfg)
-				equal[E](t, checkErr(err), true)
+				assert.Equal[E](t, checkErr(err), true)
 			})
 		}
 
