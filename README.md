@@ -21,7 +21,7 @@ code readability.
 
 ## 📦 Install
 
-```
+```shell
 go get github.com/junk1tm/env
 ```
 
@@ -34,7 +34,7 @@ go get github.com/junk1tm/env
 * Per-variable [options](#tag-level-options): `required`, `expand`
 * Auto-generated [usage message](#usage-on-error)
 
-## ⚙️ Usage
+## 🔧 Usage
 
 `Load` is the main function of this package. It loads environment variables into
 the provided struct.
