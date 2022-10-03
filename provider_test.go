@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/junk1tm/env"
+	"github.com/junk1tm/env/assert"
+	. "github.com/junk1tm/env/assert/dotimport"
 )
 
 func TestProviderFunc_LookupEnv(t *testing.T) {
@@ -26,10 +28,10 @@ func TestProviderFunc_LookupEnv(t *testing.T) {
 		Baz int `env:"BAZ,required"`
 	}
 	err := env.LoadFrom(f, &cfg)
-	noerr[F](t, err)
-	equal[E](t, cfg.Foo, 1)
-	equal[E](t, cfg.Bar, 2)
-	equal[E](t, cfg.Baz, 3)
+	assert.NoErr[F](t, err)
+	assert.Equal[E](t, cfg.Foo, 1)
+	assert.Equal[E](t, cfg.Bar, 2)
+	assert.Equal[E](t, cfg.Baz, 3)
 }
 
 func TestMap_LookupEnv(t *testing.T) {
@@ -45,8 +47,8 @@ func TestMap_LookupEnv(t *testing.T) {
 		Baz int `env:"BAZ,required"`
 	}
 	err := env.LoadFrom(m, &cfg)
-	noerr[F](t, err)
-	equal[E](t, cfg.Foo, 1)
-	equal[E](t, cfg.Bar, 2)
-	equal[E](t, cfg.Baz, 3)
+	assert.NoErr[F](t, err)
+	assert.Equal[E](t, cfg.Foo, 1)
+	assert.Equal[E](t, cfg.Bar, 2)
+	assert.Equal[E](t, cfg.Baz, 3)
 }
