@@ -27,10 +27,16 @@ func (m Map) LookupEnv(key string) (string, bool) {
 	return value, ok
 }
 
+// MultiProvider combines multiple providers into a single one, which will
+// contain the union of their environment variables. The order of the providers
+// matters: if the same key exists in more than one provider, the last value
+// will be returned.
 func MultiProvider(ps ...Provider) Provider { return providers(ps) }
 
+// providers wraps a slice of providers so it can be used as [Provider].
 type providers []Provider
 
+// LookupEnv implements the [Provider] interface.
 func (ps providers) LookupEnv(key string) (string, bool) {
 	var value string
 	var found bool
