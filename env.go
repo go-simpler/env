@@ -109,6 +109,12 @@ func WithPrefix(prefix string) Option {
 	return func(l *loader) { l.prefix = prefix }
 }
 
+// WithVars allows to save the parsed environment into a slice of [Var]. This
+// can be handy for creating a custom usage message.
+func WithVars(vars *[]Var) Option {
+	return func(l *loader) { l.vars = vars }
+}
+
 // WithSliceSeparator configures [Load]/[LoadFrom] to use the provided separator
 // when parsing slice values. The default one is space.
 func WithSliceSeparator(sep string) Option {
@@ -136,6 +142,7 @@ type loader struct {
 	prefix      string
 	sliceSep    string
 	strictMode  bool
+	vars        *[]Var
 	usageOutput io.Writer
 }
 
@@ -166,6 +173,8 @@ func (l *loader) loadVars(dst any) (err error) {
 	if err != nil {
 		return err
 	}
+
+	*l.vars = vars
 
 	defer func() {
 		if err != nil && l.usageOutput != nil {

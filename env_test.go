@@ -187,6 +187,18 @@ func TestLoadFrom(t *testing.T) {
 		assert.Equal[E](t, called, true)
 	})
 
+	t.Run("with vars", func(t *testing.T) {
+		vars := []env.Var{}
+
+		var cfg struct {
+			Port int `env:"PORT"`
+		}
+		err := env.LoadFrom(env.Map{}, &cfg, env.WithVars(&vars))
+		assert.NoErr[F](t, err)
+		assert.Equal[E](t, len(vars), 1)
+		assert.Equal[E](t, vars[0].Name, "PORT")
+	})
+
 	t.Run("all supported types", func(t *testing.T) {
 		m := env.Map{
 			"INT": "-1", "INTS": "-1 0",
