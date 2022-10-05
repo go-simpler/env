@@ -26,3 +26,21 @@ func (m Map) LookupEnv(key string) (string, bool) {
 	value, ok := m[key]
 	return value, ok
 }
+
+type providers []Provider
+
+func MultiProvider(ps ...Provider) Provider {
+	return providers(ps)
+}
+
+func (ps providers) LookupEnv(key string) (string, bool) {
+	allEnv := map[string]string{}
+
+	for _, p := range ps {
+		env, ok := p.LookupEnv(key)
+		if ok {
+			allEnv[key] = env
+		}
+	}
+	return allEnv[key], true
+}
