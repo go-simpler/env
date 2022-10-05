@@ -145,6 +145,30 @@ if err := env.LoadFrom(m, &cfg); err != nil {
 fmt.Println(cfg.Port) // 8080
 ```
 
+Multiple providers can be combined into a single one using `MultiProvider`. The
+order of the providers matters: if the same key exists in more than one
+provider, the value from the last one will be used.
+
+```go
+os.Setenv("HOST", "localhost")
+
+p := env.MultiProvider(
+    env.OS,
+    env.Map{"PORT": "8080"},
+)
+
+var cfg struct {
+    Host string `env:"HOST,required"`
+    Port int    `env:"PORT,required"`
+}
+if err := env.LoadFrom(p, &cfg); err != nil {
+    // handle error
+}
+
+fmt.Println(cfg.Host) // localhost
+fmt.Println(cfg.Port) // 8080
+```
+
 ### Tag-level options
 
 The name of the environment variable can be followed by comma-separated options
