@@ -28,9 +28,9 @@ func (m Map) LookupEnv(key string) (string, bool) {
 }
 
 // MultiProvider combines multiple providers into a single one, which will
-// contain the union of their environment variables. The order of the providers
-// matters: if the same key exists in more than one provider, the value from
-// the last one will be used.
+// contain the union of their environment variables. The order of the given
+// providers matters: if the same key is found in several providers, the value
+// from the last one takes precedence.
 func MultiProvider(ps ...Provider) Provider { return providers(ps) }
 
 // providers wraps a slice of providers so it can be used as [Provider].

@@ -30,18 +30,17 @@ go get github.com/junk1tm/env
 * Simple API
 * Dependency-free
 * Custom [providers](#provider)
-* Global [prefix option](#prefix)
-* Per-variable [options](#tag-level-options): `required`, `expand`
+* Per-variable options: [required](#required), [expand](#expand)
+* Global options: [prefix](#prefix), [slice separator](#slice-separator), [strict mode](#strict-mode)
 * Auto-generated [usage message](#usage-on-error)
 
-## 🔧 Usage
+## 📋 Usage
 
 `Load` is the main function of this package. It loads environment variables into
 the provided struct.
 
 The struct fields must have the `env:"VAR"` struct tag, where `VAR` is the name
-of the corresponding environment variable. Unexported fields and fields without
-this tag (except nested structs) are ignored.
+of the corresponding environment variable. Unexported fields are ignored.
 
 ```go
 os.Setenv("PORT", "8080")
@@ -61,8 +60,6 @@ It feels [too clever][2] to me :)
 
 ### Supported types
 
-The following types are supported as struct fields:
-
 * `int` (any kind)
 * `float` (any kind)
 * `bool`
@@ -71,7 +68,25 @@ The following types are supported as struct fields:
 * `encoding.TextUnmarshaler`
 * slices of any type above
 
-See the `strconv` package from the standard library for parsing rules.
+See the `strconv.Parse*` functions for parsing rules.
+
+Nested structs of any depth level are supported, only the leaves of the config
+tree must have the `env` tag.
+
+```go
+os.Setenv("HTTP_PORT", "8080")
+
+var cfg struct {
+    HTTP struct {
+        Port int `env:"HTTP_PORT"`
+    }
+}
+if err := env.Load(&cfg); err != nil {
+    // handle error
+}
+
+fmt.Println(cfg.HTTP.Port) // 8080
+```
 
 ### Default values
 
@@ -93,27 +108,7 @@ fmt.Println(cfg.Host) // localhost
 fmt.Println(cfg.Port) // 8080
 ```
 
-### Nested structs
-
-Nested structs of any depth level are supported, but only non-struct fields are
-considered as targets for parsing.
-
-```go
-os.Setenv("HTTP_PORT", "8080")
-
-var cfg struct {
-    HTTP struct {
-        Port int `env:"HTTP_PORT"`
-    }
-}
-if err := env.Load(&cfg); err != nil {
-    // handle error
-}
-
-fmt.Println(cfg.HTTP.Port) // 8080
-```
-
-## ✨ Customization
+## 🔧 Configuration
 
 ### Provider
 
@@ -146,8 +141,8 @@ fmt.Println(cfg.Port) // 8080
 ```
 
 Multiple providers can be combined into a single one using `MultiProvider`. The
-order of the providers matters: if the same key exists in more than one
-provider, the value from the last one will be used.
+order of the given providers matters: if the same key is found in several
+providers, the value from the last one takes the precedence.
 
 ```go
 os.Setenv("HOST", "localhost")
@@ -169,11 +164,10 @@ fmt.Println(cfg.Host) // localhost
 fmt.Println(cfg.Port) // 8080
 ```
 
-### Tag-level options
+### Per-variable options
 
 The name of the environment variable can be followed by comma-separated options
-in the form of `env:"VAR,option1,option2,..."`. The following tag-level options
-are supported:
+in the form of `env:"VAR,option1,option2,..."`.
 
 #### Required
 
@@ -215,10 +209,10 @@ if err := env.Load(&cfg); err != nil {
 fmt.Println(cfg.Addr) // localhost:8080
 ```
 
-### Function-level options
+### Global options
 
-In addition to the tag-level options, `Load` also supports the following
-function-level options:
+In addition to the per-variable options, `env` also supports global options that
+apply to all variables.
 
 #### Prefix
 
