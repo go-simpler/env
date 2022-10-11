@@ -46,12 +46,11 @@ func (e *NotSetError) Error() string {
 // returns [ErrInvalidArgument].
 //
 // The struct fields must have the `env:"VAR"` struct tag, where VAR is the name
-// of the corresponding environment variable. Unexported fields and fields
-// without this tag (except nested structs) are ignored. If the tag is found
-// but the name of the environment variable is empty, the error will be
-// [ErrEmptyTagName].
+// of the corresponding environment variable. Unexported fields are ignored. If
+// the tag is found but the name of the environment variable is empty, the
+// error will be [ErrEmptyTagName].
 //
-// The following types are supported as struct fields:
+// # Supported types
 //
 //   - int (any kind)
 //   - float (any kind)
@@ -61,17 +60,21 @@ func (e *NotSetError) Error() string {
 //   - [encoding.TextUnmarshaler]
 //   - slices of any type above (space is the default separator for values)
 //
-// See the [strconv] package from the standard library for parsing rules.
-// Implementing the [encoding.TextUnmarshaler] interface is enough to use any
-// user-defined type. Default values can be specified either using the
-// `default` struct tag (has a higher priority) or by initializing the struct
-// fields directly. Nested structs of any depth level are supported, but only
-// non-struct fields are considered as targets for parsing. If a field of an
-// unsupported type is found, the error will be [ErrUnsupportedType].
+// See the [strconv].Parse* functions for parsing rules. Implementing the
+// [encoding.TextUnmarshaler] interface is enough to use any user-defined type.
+// Nested structs of any depth level are supported, only the leaves of the
+// config tree must have the `env` tag. If a field of an unsupported type is
+// found, the error will be [ErrUnsupportedType].
+//
+// # Default values
+//
+// Default values can be specified either using the `default` struct tag (has a
+// higher priority) or by initializing the struct fields directly.
+//
+// # Per-variable options
 //
 // The name of the environment variable can be followed by comma-separated
-// options in the form of `env:"VAR,option1,option2,..."`. The following
-// tag-level options are supported:
+// options in the form of `env:"VAR,option1,option2,..."`:
 //
 //   - required: marks the environment variable as required
 //   - expand: expands the value of the environment variable using [os.Expand]
@@ -80,8 +83,10 @@ func (e *NotSetError) Error() string {
 // [NotSetError] will be returned. If the tag contains an invalid option, the
 // error will be [ErrInvalidTagOption].
 //
-// In addition to the tag-level options, Load also supports the following
-// function-level options:
+// # Global options
+//
+// In addition to the per-variable options, [env] also supports global options
+// that apply to all variables:
 //
 //   - [WithPrefix]: sets prefix for each environment variable
 //   - [WithSliceSeparator]: sets custom separator to parse slice values
@@ -100,7 +105,7 @@ func LoadFrom(p Provider, dst any, opts ...Option) error {
 	return newLoader(p, opts...).loadVars(dst)
 }
 
-// Option allows to customize the behaviour of the [Load]/[LoadFrom] functions.
+// Option allows to configure the behaviour of the [Load]/[LoadFrom] functions.
 type Option func(*loader)
 
 // WithPrefix configures [Load]/[LoadFrom] to automatically add the provided
