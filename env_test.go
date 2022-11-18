@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"github.com/go-simpler/env"
-	"github.com/go-simpler/env/assert"
-	. "github.com/go-simpler/env/assert/dotimport"
+	"github.com/go-simpler/env/internal/assert"
+	. "github.com/go-simpler/env/internal/assert/dotimport"
 )
+
+//go:generate go run -tags=installer github.com/go-simpler/assert/cmd/installer@v0.3.0 internal
 
 func TestLoadFrom(t *testing.T) {
 	t.Run("invalid argument", func(t *testing.T) {
