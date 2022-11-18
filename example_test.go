@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/junk1tm/env"
+	"github.com/go-simpler/env"
 )
 
 func ExampleLoad() {

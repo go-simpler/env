@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/junk1tm/env"
+	"github.com/go-simpler/env"
 )
 
 func TestUsage(t *testing.T) {
