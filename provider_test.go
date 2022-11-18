@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/go-simpler/env"
-	"github.com/go-simpler/env/assert"
-	. "github.com/go-simpler/env/assert/dotimport"
+	"github.com/go-simpler/env/internal/assert"
+	. "github.com/go-simpler/env/internal/assert/dotimport"
 )
 
 func TestProviderFunc_LookupEnv(t *testing.T) {
