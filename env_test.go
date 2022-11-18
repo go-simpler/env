@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/junk1tm/env"
-	"github.com/junk1tm/env/assert"
-	. "github.com/junk1tm/env/assert/dotimport"
+	"github.com/go-simpler/env"
+	"github.com/go-simpler/env/assert"
+	. "github.com/go-simpler/env/assert/dotimport"
 )
 
 func TestLoadFrom(t *testing.T) {

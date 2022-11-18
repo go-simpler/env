@@ -5,10 +5,10 @@
 A lightweight package for loading environment variables into structs
 
 [![awesome](https://awesome.re/badge.svg)](https://github.com/avelino/awesome-go#configuration)
-[![ci](https://github.com/junk1tm/env/actions/workflows/go.yml/badge.svg)](https://github.com/junk1tm/env/actions/workflows/go.yml)
-[![docs](https://pkg.go.dev/badge/github.com/junk1tm/env.svg)](https://pkg.go.dev/github.com/junk1tm/env)
-[![report](https://goreportcard.com/badge/github.com/junk1tm/env)](https://goreportcard.com/report/github.com/junk1tm/env)
-[![codecov](https://codecov.io/gh/junk1tm/env/branch/main/graph/badge.svg)](https://codecov.io/gh/junk1tm/env)
+[![ci](https://github.com/go-simpler/env/actions/workflows/go.yml/badge.svg)](https://github.com/go-simpler/env/actions/workflows/go.yml)
+[![docs](https://pkg.go.dev/badge/github.com/go-simpler/env.svg)](https://pkg.go.dev/github.com/go-simpler/env)
+[![report](https://goreportcard.com/badge/github.com/go-simpler/env)](https://goreportcard.com/report/github.com/go-simpler/env)
+[![codecov](https://codecov.io/gh/go-simpler/env/branch/main/graph/badge.svg)](https://codecov.io/gh/go-simpler/env)
 
 </div>
 
@@ -22,7 +22,7 @@ code readability.
 ## 📦 Install
 
 ```shell
-go get github.com/junk1tm/env
+go get github.com/go-simpler/env
 ```
 
 ## 🚀 Features
@@ -54,9 +54,6 @@ if err := env.Load(&cfg); err != nil {
 
 fmt.Println(cfg.Port) // 8080
 ```
-
-Why not just resolve the name automatically, like `toUpperSnakeCase(fieldName)`?
-It feels [too clever][2] to me :)
 
 ### Supported types
 
@@ -307,4 +304,3 @@ if err := env.Load(&cfg, env.WithUsageOnError(os.Stdout)); err != nil {
 ```
 
 [1]: https://12factor.net/config
-[2]: https://dave.cheney.net/2019/07/09/clear-is-better-than-clever

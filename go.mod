@@ -1,3 +1,3 @@
-module github.com/junk1tm/env
+module github.com/go-simpler/env
 
 go 1.19

@@ -38,7 +38,7 @@
 //	}
 package dotimport
 
-import "github.com/junk1tm/env/assert"
+import "github.com/go-simpler/env/assert"
 
 type (
 	E = assert.E
