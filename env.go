@@ -191,8 +191,8 @@ func (l *loader) loadVars(dst any) (err error) {
 				continue
 			}
 			// ...otherwise, use the default value.
-			// TODO(junk1tm): actually, there is no need to set a default value
-			//                if it has been obtained from the initialized struct field.
+			// TODO: actually, there is no need to set a default value
+			// if it has been obtained from the initialized struct field.
 			value = v.Default
 		}
 
