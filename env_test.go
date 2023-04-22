@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-simpler/env"
-	"github.com/go-simpler/env/internal/assert"
-	. "github.com/go-simpler/env/internal/assert/dotimport"
+	"go-simpler.org/env"
+	"go-simpler.org/env/internal/assert"
+	. "go-simpler.org/env/internal/assert/dotimport"
 )
 
 //go:generate go run -tags=installer github.com/go-simpler/assert/cmd/installer@v0.3.0 internal

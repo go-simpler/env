@@ -6,8 +6,8 @@ A lightweight package for loading environment variables into structs
 
 [![awesome](https://awesome.re/badge.svg)](https://github.com/avelino/awesome-go#configuration)
 [![ci](https://github.com/go-simpler/env/actions/workflows/go.yml/badge.svg)](https://github.com/go-simpler/env/actions/workflows/go.yml)
-[![docs](https://pkg.go.dev/badge/github.com/go-simpler/env.svg)](https://pkg.go.dev/github.com/go-simpler/env)
-[![report](https://goreportcard.com/badge/github.com/go-simpler/env)](https://goreportcard.com/report/github.com/go-simpler/env)
+[![docs](https://pkg.go.dev/badge/go-simpler.org/env.svg)](https://pkg.go.dev/go-simpler.org/env)
+[![report](https://goreportcard.com/badge/go-simpler.org/env)](https://goreportcard.com/report/go-simpler.org/env)
 [![codecov](https://codecov.io/gh/go-simpler/env/branch/main/graph/badge.svg)](https://codecov.io/gh/go-simpler/env)
 
 </div>
@@ -22,7 +22,7 @@ code readability.
 ## 📦 Install
 
 ```shell
-go get github.com/go-simpler/env
+go get go-simpler.org/env
 ```
 
 ## 🚀 Features

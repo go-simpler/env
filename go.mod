@@ -1,3 +1,3 @@
-module github.com/go-simpler/env
+module go-simpler.org/env
 
 go 1.19

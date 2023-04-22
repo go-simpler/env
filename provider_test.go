@@ -3,9 +3,9 @@ package env_test
 import (
 	"testing"
 
-	"github.com/go-simpler/env"
-	"github.com/go-simpler/env/internal/assert"
-	. "github.com/go-simpler/env/internal/assert/dotimport"
+	"go-simpler.org/env"
+	"go-simpler.org/env/internal/assert"
+	. "go-simpler.org/env/internal/assert/dotimport"
 )
 
 func TestProviderFunc_LookupEnv(t *testing.T) {

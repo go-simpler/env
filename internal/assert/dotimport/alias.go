@@ -29,7 +29,7 @@ SOFTWARE.
 // as if they were local types.
 package dotimport
 
-import "github.com/go-simpler/env/internal/assert"
+import "go-simpler.org/env/internal/assert"
 
 type (
 	E = assert.E
