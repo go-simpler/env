@@ -4,10 +4,10 @@
 
 A lightweight package for loading environment variables into structs
 
-[![awesome](https://awesome.re/badge.svg)](https://github.com/avelino/awesome-go#configuration)
-[![ci](https://github.com/go-simpler/env/actions/workflows/go.yml/badge.svg)](https://github.com/go-simpler/env/actions/workflows/go.yml)
-[![docs](https://pkg.go.dev/badge/go-simpler.org/env.svg)](https://pkg.go.dev/go-simpler.org/env)
-[![report](https://goreportcard.com/badge/go-simpler.org/env)](https://goreportcard.com/report/go-simpler.org/env)
+[![awesome-go](https://awesome.re/badge.svg)](https://github.com/avelino/awesome-go#configuration)
+[![checks](https://github.com/go-simpler/env/actions/workflows/checks.yml/badge.svg)](https://github.com/go-simpler/env/actions/workflows/checks.yml)
+[![pkg.go.dev](https://pkg.go.dev/badge/go-simpler.org/env.svg)](https://pkg.go.dev/go-simpler.org/env)
+[![goreportcard](https://goreportcard.com/badge/go-simpler.org/env)](https://goreportcard.com/report/go-simpler.org/env)
 [![codecov](https://codecov.io/gh/go-simpler/env/branch/main/graph/badge.svg)](https://codecov.io/gh/go-simpler/env)
 
 </div>

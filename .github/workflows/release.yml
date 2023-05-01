@@ -2,26 +2,16 @@ name: release
 
 on:
   push:
-    tags: [ v* ]
+    tags: [ 'v[0-9]+.[0-9]+.[0-9]+' ]
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        required: true
+        description: The next semantic version to release
 
 jobs:
   release:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version-file: go.mod
-
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v3
-        with:
-          version: latest
-          args: release --rm-dist
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    uses: go-simpler/.github/.github/workflows/release.yml@main
+    with:
+      version: ${{ github.event_name == 'push' && github.ref_name || inputs.version }}
