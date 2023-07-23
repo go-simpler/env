@@ -1,5 +1,4 @@
 // Package env provides an API for loading environment variables into structs.
-// See the [Load] function documentation for details.
 package env
 
 import (
@@ -9,17 +8,6 @@ import (
 	"reflect"
 	"strings"
 )
-
-// NotSetError is returned when environment variables are marked as required but not set.
-type NotSetError struct {
-	// Names is a slice of the names of the missing required environment variables.
-	Names []string
-}
-
-// Error implements the error interface.
-func (e *NotSetError) Error() string {
-	return fmt.Sprintf("env: %v are required but not set", e.Names)
-}
 
 // Load loads environment variables into the provided struct using the [OS] [Provider] as their source.
 // To specify a custom [Provider], use the [LoadFrom] function.
@@ -101,6 +89,17 @@ func WithStrictMode() Option {
 // The message format can be changed by assigning the global [Usage] variable to a custom implementation.
 func WithUsageOnError(w io.Writer) Option {
 	return func(l *loader) { l.usageOutput = w }
+}
+
+// NotSetError is returned when environment variables are marked as required but not set.
+type NotSetError struct {
+	// Names is a slice of the names of the missing required environment variables.
+	Names []string
+}
+
+// Error implements the error interface.
+func (e *NotSetError) Error() string {
+	return fmt.Sprintf("env: %v are required but not set", e.Names)
 }
 
 type loader struct {
