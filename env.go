@@ -3,25 +3,12 @@
 package env
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"reflect"
 	"strings"
 )
-
-// ErrInvalidArgument is returned when the argument provided to [Load]/[LoadFrom] is invalid.
-var ErrInvalidArgument = errors.New("env: argument must be a non-nil struct pointer")
-
-// ErrEmptyTagName is returned when the `env` tag is found but the name of the environment variable is empty.
-var ErrEmptyTagName = errors.New("env: empty tag name is not allowed")
-
-// ErrUnsupportedType is returned when the provided struct contains a field of an unsupported type.
-var ErrUnsupportedType = errors.New("env: unsupported type")
-
-// ErrInvalidTagOption is returned when the `env` tag contains an invalid option, e.g. `env:"VAR,invalid"`.
-var ErrInvalidTagOption = errors.New("env: invalid tag option")
 
 // NotSetError is returned when environment variables are marked as required but not set.
 type NotSetError struct {
@@ -36,11 +23,10 @@ func (e *NotSetError) Error() string {
 
 // Load loads environment variables into the provided struct using the [OS] [Provider] as their source.
 // To specify a custom [Provider], use the [LoadFrom] function.
-// dst must be a non-nil struct pointer, otherwise Load returns [ErrInvalidArgument].
+// dst must be a non-nil struct pointer, otherwise Load panics.
 //
 // The struct fields must have the `env:"VAR"` struct tag, where VAR is the name of the corresponding environment variable.
 // Unexported fields are ignored.
-// If the tag is found but the name of the environment variable is empty, the error will be [ErrEmptyTagName].
 //
 // # Supported types
 //
@@ -55,7 +41,6 @@ func (e *NotSetError) Error() string {
 // See the [strconv].Parse* functions for parsing rules.
 // Implementing the [encoding.TextUnmarshaler] interface is enough to use any user-defined type.
 // Nested structs of any depth level are supported, only the leaves of the config tree must have the `env` tag.
-// If a field of an unsupported type is found, the error will be [ErrUnsupportedType].
 //
 // # Default values
 //
@@ -69,7 +54,6 @@ func (e *NotSetError) Error() string {
 //   - expand: expands the value of the environment variable using [os.Expand]
 //
 // If environment variables are marked as required but not set, an error of type [NotSetError] will be returned.
-// If the tag contains an invalid option, the error will be [ErrInvalidTagOption].
 //
 // # Global options
 //
@@ -144,7 +128,7 @@ func newLoader(p Provider, opts ...Option) *loader {
 func (l *loader) loadVars(dst any) (err error) {
 	rv := reflect.ValueOf(dst)
 	if !structPtr(rv) {
-		return ErrInvalidArgument
+		panic("env: argument must be a non-nil struct pointer")
 	}
 
 	vars, err := l.parseVars(rv.Elem())
@@ -218,7 +202,7 @@ func (l *loader) parseVars(v reflect.Value) ([]Var, error) {
 		parts := strings.Split(value, ",")
 		name, options := parts[0], parts[1:]
 		if name == "" {
-			return nil, ErrEmptyTagName
+			panic("env: empty tag name is not allowed")
 		}
 
 		var required, expand bool
@@ -229,7 +213,7 @@ func (l *loader) parseVars(v reflect.Value) ([]Var, error) {
 			case "expand":
 				expand = true
 			default:
-				return nil, fmt.Errorf("%w %q", ErrInvalidTagOption, option)
+				panic(fmt.Sprintf("env: invalid tag option `%s`", option))
 			}
 		}
 
