@@ -13,7 +13,7 @@ import (
 	. "go-simpler.org/env/internal/assert/dotimport"
 )
 
-//go:generate go run -tags=installer github.com/go-simpler/assert/cmd/installer@v0.3.0 internal
+//go:generate go run -tags=copier go-simpler.org/assert/cmd/copier@v0.5.0 internal
 
 func TestLoadFrom(t *testing.T) {
 	t.Run("invalid argument", func(t *testing.T) {
