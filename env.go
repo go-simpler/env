@@ -131,11 +131,7 @@ func (l *loader) loadVars(dst any) (err error) {
 		panic("env: argument must be a non-nil struct pointer")
 	}
 
-	vars, err := l.parseVars(rv.Elem())
-	if err != nil {
-		return err
-	}
-
+	vars := l.parseVars(rv.Elem())
 	defer func() {
 		if err != nil && l.usageOutput != nil {
 			Usage(l.usageOutput, vars)
@@ -174,7 +170,7 @@ func (l *loader) loadVars(dst any) (err error) {
 	return nil
 }
 
-func (l *loader) parseVars(v reflect.Value) ([]Var, error) {
+func (l *loader) parseVars(v reflect.Value) []Var {
 	var vars []Var
 
 	for i := 0; i < v.NumField(); i++ {
@@ -185,10 +181,7 @@ func (l *loader) parseVars(v reflect.Value) ([]Var, error) {
 
 		// special case: a nested struct, parse its fields recursively.
 		if kindOf(field, reflect.Struct) && !implements(field, unmarshalerIface) {
-			nested, err := l.parseVars(field)
-			if err != nil {
-				return nil, err
-			}
+			nested := l.parseVars(field)
 			vars = append(vars, nested...)
 			continue
 		}
@@ -244,7 +237,7 @@ func (l *loader) parseVars(v reflect.Value) ([]Var, error) {
 		})
 	}
 
-	return vars, nil
+	return vars
 }
 
 func (l *loader) lookupEnv(key string, expand bool) (string, bool) {
