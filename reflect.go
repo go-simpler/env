@@ -33,8 +33,7 @@ func kindOf(v reflect.Value, kinds ...reflect.Kind) bool {
 	return false
 }
 
-// implements reports whether v's type implements one of the provided
-// interfaces.
+// implements reports whether v's type implements one of the provided interfaces.
 func implements(v reflect.Value, ifaces ...reflect.Type) bool {
 	for _, iface := range ifaces {
 		if t := v.Type(); t.Implements(iface) || reflect.PtrTo(v.Type()).Implements(iface) {
@@ -49,8 +48,7 @@ func structPtr(v reflect.Value) bool {
 	return v.IsValid() && v.Kind() == reflect.Ptr && v.Elem().Kind() == reflect.Struct && !v.IsNil()
 }
 
-// setValue parses s based on v's type/kind and sets v's underlying value to the
-// result.
+// setValue parses s based on v's type/kind and sets v's underlying value to the result.
 func setValue(v reflect.Value, s string) error {
 	switch {
 	case typeOf(v, durationType):
@@ -72,7 +70,6 @@ func setValue(v reflect.Value, s string) error {
 	}
 }
 
-// setInt parses an int value from s and sets v's underlying value to it.
 func setInt(v reflect.Value, s string) error {
 	bits := v.Type().Bits()
 	i, err := strconv.ParseInt(s, 10, bits)
@@ -83,7 +80,6 @@ func setInt(v reflect.Value, s string) error {
 	return nil
 }
 
-// setUint parses an uint value from s and sets v's underlying value to it.
 func setUint(v reflect.Value, s string) error {
 	bits := v.Type().Bits()
 	u, err := strconv.ParseUint(s, 10, bits)
@@ -94,7 +90,6 @@ func setUint(v reflect.Value, s string) error {
 	return nil
 }
 
-// setFloat parses a float value from s and sets v's underlying value to it.
 func setFloat(v reflect.Value, s string) error {
 	bits := v.Type().Bits()
 	f, err := strconv.ParseFloat(s, bits)
@@ -105,7 +100,6 @@ func setFloat(v reflect.Value, s string) error {
 	return nil
 }
 
-// setBool parses a bool value from s and sets v's underlying value to it.
 func setBool(v reflect.Value, s string) error {
 	b, err := strconv.ParseBool(s)
 	if err != nil {
@@ -115,14 +109,11 @@ func setBool(v reflect.Value, s string) error {
 	return nil
 }
 
-// setString sets v's underlying value to s.
 func setString(v reflect.Value, s string) error {
 	v.SetString(s)
 	return nil
 }
 
-// setDuration parses a duration value from s and sets v's underlying value to
-// it.
 func setDuration(v reflect.Value, s string) error {
 	d, err := time.ParseDuration(s)
 	if err != nil {
@@ -132,7 +123,6 @@ func setDuration(v reflect.Value, s string) error {
 	return nil
 }
 
-// setUnmarshaler calls v's UnmarshalText method with s as the text argument.
 func setUnmarshaler(v reflect.Value, s string) error {
 	u := v.Addr().Interface().(encoding.TextUnmarshaler)
 	if err := u.UnmarshalText([]byte(s)); err != nil {
@@ -141,8 +131,6 @@ func setUnmarshaler(v reflect.Value, s string) error {
 	return nil
 }
 
-// setSlice creates a new slice of the values parsed from s and sets v's
-// underlying value to it.
 func setSlice(v reflect.Value, s []string) error {
 	slice := reflect.MakeSlice(v.Type(), len(s), cap(s))
 	for i := 0; i < slice.Len(); i++ {

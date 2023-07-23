@@ -172,7 +172,6 @@ func TestLoadFrom(t *testing.T) {
 	})
 
 	t.Run("with usage on error", func(t *testing.T) {
-		// reset to the default usage after the test is finished.
 		usage := env.Usage
 		defer func() { env.Usage = usage }()
 
@@ -289,8 +288,8 @@ func TestLoadFrom(t *testing.T) {
 	t.Run("parsing errors", func(t *testing.T) {
 		test := func(name, envName string, checkErr func(error) bool) {
 			t.Run(name, func(t *testing.T) {
-				// "-" is an invalid value for all these types, will cause an
-				// error for strconv.Parse*, time.ParseDuration and net.ParseIP.
+				// "-" is an invalid value for all the following types,
+				// it causes an error for strconv.Parse*, time.ParseDuration and net.ParseIP.
 				m := env.Map{envName: "-"}
 
 				var cfg struct {
@@ -311,7 +310,6 @@ func TestLoadFrom(t *testing.T) {
 			return errors.Is(err, strconv.ErrSyntax)
 		}
 		isInvalidDuration := func(err error) bool {
-			// time.ParseDuration does not return any sentinel error :(
 			return errors.Unwrap(err).Error() == `time: invalid duration "-"`
 		}
 		asParseError := func(err error) bool {

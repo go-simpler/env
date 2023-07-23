@@ -4,12 +4,12 @@ import "os"
 
 // Provider represents an entity that is able to provide environment variables.
 type Provider interface {
-	// LookupEnv retrieves the value of the environment variable named by the
-	// key. If it is not found, the boolean will be false.
+	// LookupEnv retrieves the value of the environment variable named by the key.
+	// If it is not found, the boolean will be false.
 	LookupEnv(key string) (value string, ok bool)
 }
 
-// ProviderFunc is an adapter that allows using functions as [Provider].
+// ProviderFunc is an adapter that allows using a function as [Provider].
 type ProviderFunc func(key string) (value string, ok bool)
 
 // LookupEnv implements the [Provider] interface.
@@ -27,16 +27,12 @@ func (m Map) LookupEnv(key string) (string, bool) {
 	return value, ok
 }
 
-// MultiProvider combines multiple providers into a single one, which will
-// contain the union of their environment variables. The order of the given
-// providers matters: if the same key is found in several providers, the value
-// from the last one takes precedence.
+// MultiProvider combines multiple providers into a single one containing the union of all environment variables.
+// The order of the given providers matters: if the same key occurs more than once, the later value takes precedence.
 func MultiProvider(ps ...Provider) Provider { return providers(ps) }
 
-// providers wraps a slice of providers so it can be used as [Provider].
 type providers []Provider
 
-// LookupEnv implements the [Provider] interface.
 func (ps providers) LookupEnv(key string) (string, bool) {
 	var value string
 	var found bool

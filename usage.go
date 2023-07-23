@@ -7,23 +7,20 @@ import (
 	"text/tabwriter"
 )
 
-// Var contains information about the environment variable parsed from a struct
-// field. It is exported as a part of the [Usage] function signature.
+// Var contains the information about the environment variable parsed from a struct field.
 type Var struct {
-	Name     string       // Name is the full name of the variable, including prefix.
-	Type     reflect.Type // Type is the variable's type.
-	Desc     string       // Desc is an optional description parsed from the `desc` tag.
-	Default  string       // Default is the default value of the variable. If the variable is marked as required, it will be empty.
-	Required bool         // Required is true, if the variable is marked as required.
-	Expand   bool         // Expand is true, if the variable is marked to be expanded with [os.Expand].
+	Name     string       // The full name of the variable, including the prefix.
+	Type     reflect.Type // The type of the variable.
+	Desc     string       // The description parsed from the `desc` tag (if exists).
+	Default  string       // The default value of the variable. Empty, if the variable is required.
+	Required bool         // True, if the variable is marked as required.
+	Expand   bool         // True, if the variable is marked to be expanded with [os.Expand].
 
 	field reflect.Value // the original struct field.
 }
 
-// Usage prints a usage message documenting all defined environment variables.
-// It will be called by [Load]/[LoadFrom] if the [WithUsageOnError] option is
-// provided and an error occurs while loading environment variables. It is
-// exported as a variable, so it can be changed to a custom implementation.
+// Usage writes a usage message to the given [io.Writer], documenting all defined environment variables.
+// It will be called by [Load]/[LoadFrom] if the [WithUsageOnError] option is specified and an error occurs.
 var Usage = func(w io.Writer, vars []Var) {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	defer tw.Flush()

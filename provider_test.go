@@ -59,7 +59,7 @@ func TestMultiProvider(t *testing.T) {
 		"BAR": "2",
 	}
 	m2 := env.Map{
-		"BAR": "3", // overrides BAR from m1
+		"BAR": "3", // overrides BAR from m1.
 		"BAZ": "4",
 	}
 	p := env.MultiProvider(m1, m2)
