@@ -19,8 +19,10 @@ func TestLoadFrom(t *testing.T) {
 	t.Run("invalid argument", func(t *testing.T) {
 		test := func(name string, dst any) {
 			t.Run(name, func(t *testing.T) {
-				defer assert.Panics[E](t, "env: argument must be a non-nil struct pointer")
-				_ = env.LoadFrom(env.Map{}, dst)
+				assert.Panics[E](t,
+					func() { _ = env.LoadFrom(env.Map{}, dst) },
+					"env: argument must be a non-nil struct pointer",
+				)
 			})
 		}
 
@@ -31,23 +33,25 @@ func TestLoadFrom(t *testing.T) {
 	})
 
 	t.Run("empty tag name", func(t *testing.T) {
-		defer assert.Panics[E](t, "env: empty tag name is not allowed")
-
 		var cfg struct {
 			Port string `env:""`
 		}
-		_ = env.LoadFrom(env.Map{}, &cfg)
+		assert.Panics[E](t,
+			func() { _ = env.LoadFrom(env.Map{}, &cfg) },
+			"env: empty tag name is not allowed",
+		)
 	})
 
 	t.Run("unsupported type", func(t *testing.T) {
-		defer assert.Panics[E](t, "env: unsupported type `complex64`")
-
 		m := env.Map{"PORT": "8080"}
 
 		var cfg struct {
 			Port complex64 `env:"PORT"`
 		}
-		_ = env.LoadFrom(m, &cfg)
+		assert.Panics[E](t,
+			func() { _ = env.LoadFrom(m, &cfg) },
+			"env: unsupported type `complex64`",
+		)
 	})
 
 	t.Run("ignored fields", func(t *testing.T) {
@@ -130,14 +134,15 @@ func TestLoadFrom(t *testing.T) {
 	})
 
 	t.Run("invalid tag option", func(t *testing.T) {
-		defer assert.Panics[E](t, "env: invalid tag option `foo`")
-
 		var cfg struct {
 			HTTP struct {
 				Port string `env:"HTTP_PORT,foo"`
 			}
 		}
-		_ = env.LoadFrom(env.Map{}, &cfg)
+		assert.Panics[E](t,
+			func() { _ = env.LoadFrom(env.Map{}, &cfg) },
+			"env: invalid tag option `foo`",
+		)
 	})
 
 	t.Run("with prefix", func(t *testing.T) {

@@ -67,15 +67,18 @@ func AsErr[T Param](t TB, err error, target any, formatAndArgs ...any) {
 	}
 }
 
-// Panics asserts that a function panics with the argument v.
-// Can only be used with defer.
-func Panics[T Param](t TB, v any, formatAndArgs ...any) {
+// Panics asserts that the given function panics with the argument v.
+func Panics[T Param](t TB, fn func(), v any, formatAndArgs ...any) {
 	t.Helper()
-	if r := recover(); r != nil {
-		Equal[E](t, r, v, "unexpected panic argument\ngot\t%v\nwant\t%v", r, v)
-		return
-	}
-	fail[T](t, formatAndArgs, "want a panic")
+	defer func() {
+		t.Helper()
+		if r := recover(); r != nil {
+			Equal[T](t, r, v, "unexpected panic argument\ngot\t%v\nwant\t%v", r, v)
+			return
+		}
+		fail[T](t, formatAndArgs, "want a panic")
+	}()
+	fn()
 }
 
 // fail marks the test as having failed and continues/stops its execution based on T's type.
