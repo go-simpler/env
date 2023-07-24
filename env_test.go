@@ -13,14 +13,16 @@ import (
 	. "go-simpler.org/env/internal/assert/dotimport"
 )
 
-//go:generate go run -tags=copier go-simpler.org/assert/cmd/copier@v0.5.0 internal
+//go:generate go run -tags=copier go-simpler.org/assert/cmd/copier@v0.6.0 internal
 
 func TestLoadFrom(t *testing.T) {
 	t.Run("invalid argument", func(t *testing.T) {
 		test := func(name string, dst any) {
 			t.Run(name, func(t *testing.T) {
-				err := env.LoadFrom(env.Map{}, dst)
-				assert.IsErr[E](t, err, env.ErrInvalidArgument)
+				assert.Panics[E](t,
+					func() { _ = env.LoadFrom(env.Map{}, dst) },
+					"env: argument must be a non-nil struct pointer",
+				)
 			})
 		}
 
@@ -34,8 +36,10 @@ func TestLoadFrom(t *testing.T) {
 		var cfg struct {
 			Port string `env:""`
 		}
-		err := env.LoadFrom(env.Map{}, &cfg)
-		assert.IsErr[E](t, err, env.ErrEmptyTagName)
+		assert.Panics[E](t,
+			func() { _ = env.LoadFrom(env.Map{}, &cfg) },
+			"env: empty tag name is not allowed",
+		)
 	})
 
 	t.Run("unsupported type", func(t *testing.T) {
@@ -44,8 +48,10 @@ func TestLoadFrom(t *testing.T) {
 		var cfg struct {
 			Port complex64 `env:"PORT"`
 		}
-		err := env.LoadFrom(m, &cfg)
-		assert.IsErr[E](t, err, env.ErrUnsupportedType)
+		assert.Panics[E](t,
+			func() { _ = env.LoadFrom(m, &cfg) },
+			"env: unsupported type `complex64`",
+		)
 	})
 
 	t.Run("ignored fields", func(t *testing.T) {
@@ -133,8 +139,10 @@ func TestLoadFrom(t *testing.T) {
 				Port string `env:"HTTP_PORT,foo"`
 			}
 		}
-		err := env.LoadFrom(env.Map{}, &cfg)
-		assert.IsErr[E](t, err, env.ErrInvalidTagOption)
+		assert.Panics[E](t,
+			func() { _ = env.LoadFrom(env.Map{}, &cfg) },
+			"env: invalid tag option `foo`",
+		)
 	})
 
 	t.Run("with prefix", func(t *testing.T) {
