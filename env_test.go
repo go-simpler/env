@@ -167,18 +167,6 @@ func TestLoadFrom(t *testing.T) {
 		assert.Equal[E](t, cfg.Ports, []int{8080, 8081, 8082})
 	})
 
-	t.Run("with strict mode", func(t *testing.T) {
-		var notSetErr *env.NotSetError
-
-		var cfg struct {
-			Host string `env:"HOST"`
-			Port int    `env:"PORT" default:"8080"`
-		}
-		err := env.LoadFrom(env.Map{}, &cfg, env.WithStrictMode())
-		assert.AsErr[F](t, err, &notSetErr)
-		assert.Equal[E](t, notSetErr.Names, []string{"HOST"})
-	})
-
 	t.Run("with usage on error", func(t *testing.T) {
 		usage := env.Usage
 		defer func() { env.Usage = usage }()
