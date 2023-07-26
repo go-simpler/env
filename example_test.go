@@ -145,22 +145,6 @@ func ExampleWithSliceSeparator() {
 }
 
 //nolint:gocritic //commentedOutCode
-func ExampleWithStrictMode() {
-	// os.Setenv("HOST", "localhost")
-
-	var cfg struct {
-		Host string `env:"HOST"` // (required)
-		Port int    `env:"PORT" default:"8080"`
-	}
-	if err := env.Load(&cfg, env.WithStrictMode()); err != nil {
-		var notSetErr *env.NotSetError
-		if errors.As(err, &notSetErr) {
-			fmt.Println(notSetErr.Names) // [HOST]
-		}
-	}
-}
-
-//nolint:gocritic //commentedOutCode
 func ExampleWithUsageOnError() {
 	// os.Setenv("DB_HOST", "localhost")
 	// os.Setenv("DB_PORT", "5432")
