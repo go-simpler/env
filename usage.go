@@ -11,6 +11,7 @@ import (
 type Var struct {
 	Name     string       // The full name of the variable, including the prefix.
 	Type     reflect.Type // The type of the variable.
+	Flag     string       //
 	Desc     string       // The description parsed from the `desc` tag (if exists).
 	Default  string       // The default value of the variable. Empty, if the variable is required.
 	Required bool         // True, if the variable is marked as required.

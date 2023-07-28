@@ -156,6 +156,17 @@ func TestLoadFrom(t *testing.T) {
 		assert.Equal[E](t, cfg.Port, 8080)
 	})
 
+	t.Run("with flags", func(t *testing.T) {
+		m := env.Map{"PORT": "8080"}
+
+		var cfg struct {
+			Port int `env:"PORT" flag:"port"`
+		}
+		err := env.LoadFrom(m, &cfg, env.WithFlags([]string{"-port=8081"}))
+		assert.NoErr[F](t, err)
+		assert.Equal[E](t, cfg.Port, 8081)
+	})
+
 	t.Run("with slice separator", func(t *testing.T) {
 		m := env.Map{"PORTS": "8080;8081;8082"}
 

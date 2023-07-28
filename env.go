@@ -2,6 +2,7 @@
 package env
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -71,6 +72,10 @@ func WithPrefix(prefix string) Option {
 	return func(l *loader) { l.prefix = prefix }
 }
 
+func WithFlags(args []string) Option {
+	return func(l *loader) { l.flagArgs = args }
+}
+
 // WithSliceSeparator configures [Load]/[LoadFrom] to use the provided separator when parsing slice values.
 // The default one is space.
 func WithSliceSeparator(sep string) Option {
@@ -100,6 +105,8 @@ type loader struct {
 	prefix      string
 	sliceSep    string
 	usageOutput io.Writer
+	flagSet     *flag.FlagSet
+	flagArgs    []string
 }
 
 func newLoader(p Provider, opts ...Option) *loader {
@@ -108,6 +115,8 @@ func newLoader(p Provider, opts ...Option) *loader {
 		prefix:      "",
 		sliceSep:    " ",
 		usageOutput: nil,
+		flagSet:     flag.NewFlagSet("", flag.ContinueOnError),
+		flagArgs:    nil,
 	}
 	for _, opt := range opts {
 		opt(&l)
@@ -122,6 +131,10 @@ func (l *loader) loadVars(dst any) (err error) {
 	}
 
 	vars := l.parseVars(rv.Elem())
+	if err := l.flagSet.Parse(l.flagArgs); err != nil {
+		return fmt.Errorf("parsing flags: %w", err)
+	}
+
 	defer func() {
 		if err != nil && l.usageOutput != nil {
 			Usage(l.usageOutput, vars)
@@ -132,15 +145,19 @@ func (l *loader) loadVars(dst any) (err error) {
 	var notset []string
 
 	for _, v := range vars {
-		value, ok := l.lookupEnv(v.Name, v.Expand)
-		if !ok {
-			// if the variable is required, mark it as missing and skip the iteration...
+		value, set := l.lookupEnv(v.Name, v.Expand)
+
+		fl := l.flagSet.Lookup(v.Flag)
+		if fl != nil {
+			value = fl.Value.String() // flags have higher priority.
+		}
+
+		if !set && fl == nil {
+			value = v.Default
 			if v.Required {
 				notset = append(notset, v.Name)
 				continue
 			}
-			// ...otherwise, use the default value.
-			value = v.Default
 		}
 
 		if kindOf(v.field, reflect.Slice) && !implements(v.field, unmarshalerIface) {
@@ -182,6 +199,12 @@ func (l *loader) parseVars(v reflect.Value) []Var {
 			continue // skip fields without the `env` tag.
 		}
 
+		flagName, ok := sf.Tag.Lookup("flag")
+		if ok {
+			// TODO: bool flags special case, e.g. -help.
+			l.flagSet.String(flagName, "", "")
+		}
+
 		parts := strings.Split(value, ",")
 		name, options := parts[0], parts[1:]
 		if name == "" {
@@ -214,6 +237,7 @@ func (l *loader) parseVars(v reflect.Value) []Var {
 		vars = append(vars, Var{
 			Name:     l.prefix + name,
 			Type:     field.Type(),
+			Flag:     flagName,
 			Desc:     sf.Tag.Get("desc"),
 			Default:  defValue,
 			Required: required,
