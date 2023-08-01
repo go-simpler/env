@@ -142,14 +142,14 @@ func (l *loader) loadVars(dst any) (err error) {
 	var notset []string
 
 	for _, v := range vars {
-		value, set := l.lookupEnv(v.Name, v.Expand)
+		value, envSet := l.lookupEnv(v.Name, v.Expand)
 
-		fl := l.flagSet.Lookup(v.Flag)
-		if fl != nil {
-			value = fl.Value.String() // flags have higher priority.
+		flagValue, flagSet := l.lookupFlag(v.Flag)
+		if flagSet {
+			value = flagValue // flags have higher priority.
 		}
 
-		if !set && fl == nil {
+		if !envSet && !flagSet {
 			value = v.Default
 			if v.Required {
 				notset = append(notset, v.Name)
@@ -266,4 +266,18 @@ func (l *loader) lookupEnv(key string, expand bool) (string, bool) {
 	}
 
 	return os.Expand(value, mapping), true
+}
+
+func (l *loader) lookupFlag(name string) (string, bool) {
+	var value string
+	var set bool
+
+	l.flagSet.Visit(func(fl *flag.Flag) {
+		if fl.Name == name {
+			value = fl.Value.String()
+			set = true
+		}
+	})
+
+	return value, set
 }
