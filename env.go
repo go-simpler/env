@@ -111,12 +111,9 @@ type loader struct {
 
 func newLoader(p Provider, opts ...Option) *loader {
 	l := loader{
-		provider:    p,
-		prefix:      "",
-		sliceSep:    " ",
-		usageOutput: nil,
-		flagSet:     flag.NewFlagSet("", flag.ContinueOnError),
-		flagArgs:    nil,
+		provider: p,
+		sliceSep: " ",
+		flagSet:  flag.NewFlagSet("", flag.ContinueOnError),
 	}
 	for _, opt := range opts {
 		opt(&l)
@@ -201,8 +198,12 @@ func (l *loader) parseVars(v reflect.Value) []Var {
 
 		flagName, ok := sf.Tag.Lookup("flag")
 		if ok {
-			// TODO: bool flags special case, e.g. -help.
-			l.flagSet.String(flagName, "", "")
+			if kindOf(field, reflect.Bool) {
+				// handle bool flags with no value, e.g. -help.
+				l.flagSet.Bool(flagName, false, "")
+			} else {
+				l.flagSet.String(flagName, "", "")
+			}
 		}
 
 		parts := strings.Split(value, ",")
