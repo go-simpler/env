@@ -2,6 +2,7 @@
 package env
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -128,7 +129,7 @@ func (l *loader) loadVars(dst any) (err error) {
 	}
 
 	vars := l.parseVars(rv.Elem())
-	if err := l.flagSet.Parse(l.flagArgs); err != nil {
+	if err := l.flagSet.Parse(l.flagArgs); err != nil && !errors.Is(err, flag.ErrHelp) {
 		return fmt.Errorf("parsing flags: %w", err)
 	}
 
