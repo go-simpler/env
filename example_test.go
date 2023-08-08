@@ -143,7 +143,7 @@ func ExampleWithSliceSeparator() {
 }
 
 //nolint:gocritic //commentedOutCode
-func ExampleWithUsageOnError() {
+func ExampleUsage() {
 	// os.Setenv("DB_HOST", "localhost")
 	// os.Setenv("DB_PORT", "5432")
 
@@ -158,8 +158,9 @@ func ExampleWithUsageOnError() {
 		HTTPPort: 8080,
 		Timeouts: []time.Duration{1 * time.Second, 2 * time.Second, 3 * time.Second},
 	}
-	if err := env.Load(&cfg, env.WithUsageOnError(os.Stdout)); err != nil {
+	if err := env.Load(&cfg); err != nil {
 		// handle error
+		env.Usage(&cfg, os.Stdout)
 	}
 
 	// Output:

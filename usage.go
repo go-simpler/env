@@ -20,8 +20,14 @@ type Var struct {
 }
 
 // Usage writes a usage message to the given [io.Writer], documenting all defined environment variables.
-// It will be called by [Load] if the [WithUsageOnError] option is specified and an error occurs.
-var Usage = func(w io.Writer, vars []Var) {
+func Usage(cfg any, w io.Writer) {
+	v := reflect.ValueOf(cfg)
+	if !structPtr(v) {
+		panic("env: argument must be a non-nil struct pointer")
+	}
+
+	vars := newLoader(nil).parseVars(v.Elem())
+
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	defer tw.Flush()
 

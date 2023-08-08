@@ -3,7 +3,6 @@ package env
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"reflect"
 	"strings"
@@ -76,13 +75,6 @@ func WithSliceSeparator(sep string) Option {
 	return func(l *loader) { l.sliceSep = sep }
 }
 
-// WithUsageOnError configures [Load] to write an auto-generated usage message to the provided [io.Writer],
-// if an error occurs while loading environment variables.
-// The message format can be changed by assigning the global [Usage] variable to a custom implementation.
-func WithUsageOnError(w io.Writer) Option {
-	return func(l *loader) { l.usageOutput = w }
-}
-
 // NotSetError is returned when environment variables are marked as required but not set.
 type NotSetError struct {
 	// Names is a slice of the names of the missing required environment variables.
@@ -96,17 +88,15 @@ func (e *NotSetError) Error() string {
 
 type loader struct {
 	source      Source
-	prefix      string
-	sliceSep    string
-	usageOutput io.Writer
+	prefix   string
+	sliceSep string
 }
 
 func newLoader(opts []Option) *loader {
 	l := loader{
 		source:      OS,
-		prefix:      "",
-		sliceSep:    " ",
-		usageOutput: nil,
+		prefix:   "",
+		sliceSep: " ",
 	}
 	for _, opt := range opts {
 		opt(&l)
@@ -114,18 +104,13 @@ func newLoader(opts []Option) *loader {
 	return &l
 }
 
-func (l *loader) loadVars(cfg any) (err error) {
+func (l *loader) loadVars(cfg any) error {
 	v := reflect.ValueOf(cfg)
 	if !structPtr(v) {
 		panic("env: argument must be a non-nil struct pointer")
 	}
 
 	vars := l.parseVars(v.Elem())
-	defer func() {
-		if err != nil && l.usageOutput != nil {
-			Usage(l.usageOutput, vars)
-		}
-	}()
 
 	// accumulate missing required variables to return NotSetError after the loop is finished.
 	var notset []string
@@ -142,6 +127,7 @@ func (l *loader) loadVars(cfg any) (err error) {
 			value = v.Default
 		}
 
+		var err error
 		if kindOf(v.field, reflect.Slice) && !implements(v.field, unmarshalerIface) {
 			err = setSlice(v.field, strings.Split(value, l.sliceSep))
 		} else {

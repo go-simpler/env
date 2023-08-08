@@ -2,7 +2,6 @@ package env_test
 
 import (
 	"errors"
-	"io"
 	"net"
 	"strconv"
 	"testing"
@@ -182,23 +181,6 @@ func TestLoad(t *testing.T) {
 		err := env.Load(&cfg, env.WithSource(m), env.WithSliceSeparator(";"))
 		assert.NoErr[F](t, err)
 		assert.Equal[E](t, cfg.Ports, []int{8080, 8081, 8082})
-	})
-
-	t.Run("with usage on error", func(t *testing.T) {
-		usage := env.Usage
-		defer func() { env.Usage = usage }()
-
-		var called bool
-		env.Usage = func(w io.Writer, vars []env.Var) {
-			called = true
-		}
-
-		var cfg struct {
-			Port int `env:"PORT,required"`
-		}
-		err := env.Load(&cfg, env.WithSource(env.Map{}), env.WithUsageOnError(io.Discard))
-		assert.AsErr[F](t, err, new(*env.NotSetError))
-		assert.Equal[E](t, called, true)
 	})
 
 	t.Run("all supported types", func(t *testing.T) {
