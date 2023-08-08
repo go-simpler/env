@@ -10,7 +10,6 @@ import (
 )
 
 // Load loads environment variables into the provided struct using the [OS] [Source].
-// To specify a custom [Source], use the [LoadFrom] function.
 // cfg must be a non-nil struct pointer, otherwise Load panics.
 //
 // The struct fields must have the `env:"VAR"` struct tag, where VAR is the name of the corresponding environment variable.
@@ -45,39 +44,33 @@ import (
 //
 // # Global options
 //
-// In addition to the per-variable options, [env] also supports global options that apply to all variables:
-//
-//   - [WithPrefix]: sets prefix for each environment variable
-//   - [WithSliceSeparator]: sets custom separator to parse slice values
-//   - [WithUsageOnError]: enables a usage message printing when an error occurs
-//
-// See their documentation for details.
+// Load also accepts global options that apply to all environment variables, see the env.With* functions for details.
 func Load(cfg any, opts ...Option) error {
-	return newLoader(OS, opts...).loadVars(cfg)
+	return newLoader(opts).loadVars(cfg)
 }
 
-// LoadFrom loads environment variables into the provided struct using the specified [Source].
-// See [Load] documentation for more details.
-func LoadFrom(src Source, cfg any, opts ...Option) error {
-	return newLoader(src, opts...).loadVars(cfg)
-}
-
-// Option allows to configure the behaviour of the [Load]/[LoadFrom] functions.
+// Option allows to configure the behaviour of the [Load] function.
 type Option func(*loader)
 
-// WithPrefix configures [Load]/[LoadFrom] to automatically add the provided prefix to each environment variable.
+// WithSource configures [Load] to retrieve environment variables from the provided [Source].
+// The default one is [OS].
+func WithSource(src Source) Option {
+	return func(l *loader) { l.source = src }
+}
+
+// WithPrefix configures [Load] to automatically add the provided prefix to each environment variable.
 // By default, no prefix is configured.
 func WithPrefix(prefix string) Option {
 	return func(l *loader) { l.prefix = prefix }
 }
 
-// WithSliceSeparator configures [Load]/[LoadFrom] to use the provided separator when parsing slice values.
+// WithSliceSeparator configures [Load] to use the provided separator when parsing slice values.
 // The default one is space.
 func WithSliceSeparator(sep string) Option {
 	return func(l *loader) { l.sliceSep = sep }
 }
 
-// WithUsageOnError configures [Load]/[LoadFrom] to write an auto-generated usage message to the provided [io.Writer],
+// WithUsageOnError configures [Load] to write an auto-generated usage message to the provided [io.Writer],
 // if an error occurs while loading environment variables.
 // The message format can be changed by assigning the global [Usage] variable to a custom implementation.
 func WithUsageOnError(w io.Writer) Option {
@@ -102,9 +95,9 @@ type loader struct {
 	usageOutput io.Writer
 }
 
-func newLoader(src Source, opts ...Option) *loader {
+func newLoader(opts []Option) *loader {
 	l := loader{
-		source:      src,
+		source:      OS,
 		prefix:      "",
 		sliceSep:    " ",
 		usageOutput: nil,

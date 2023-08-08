@@ -20,7 +20,7 @@ type Var struct {
 }
 
 // Usage writes a usage message to the given [io.Writer], documenting all defined environment variables.
-// It will be called by [Load]/[LoadFrom] if the [WithUsageOnError] option is specified and an error occurs.
+// It will be called by [Load] if the [WithUsageOnError] option is specified and an error occurs.
 var Usage = func(w io.Writer, vars []Var) {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	defer tw.Flush()
