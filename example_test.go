@@ -96,10 +96,10 @@ func ExampleLoadFrom() {
 	fmt.Println(cfg.Port) // 8080
 }
 
-func ExampleMultiProvider() {
+func ExampleMultiSource() {
 	os.Setenv("HOST", "localhost")
 
-	p := env.MultiProvider(
+	src := env.MultiSource(
 		env.OS,
 		env.Map{"PORT": "8080"},
 	)
@@ -108,7 +108,7 @@ func ExampleMultiProvider() {
 		Host string `env:"HOST,required"`
 		Port int    `env:"PORT,required"`
 	}
-	if err := env.LoadFrom(p, &cfg); err != nil {
+	if err := env.LoadFrom(src, &cfg); err != nil {
 		// handle error
 	}
 
