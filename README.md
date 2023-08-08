@@ -29,7 +29,7 @@ go get go-simpler.org/env
 
 * Simple API
 * Dependency-free
-* Custom [providers](#provider)
+* Custom [sources](#source)
 * Per-variable options: [required](#required), [expand](#expand)
 * Global options: [prefix](#prefix), [slice separator](#slice-separator)
 * Auto-generated [usage message](#usage-on-error)
@@ -107,22 +107,21 @@ fmt.Println(cfg.Port) // 8080
 
 ## 🔧 Configuration
 
-### Provider
+### Source
 
 `Load` retrieves environment variables values directly from OS. To use a
 different source, try `LoadFrom` that accepts an implementation of the
-`Provider` interface as the first argument.
+`Source` interface as the first argument.
 
 ```go
-// Provider represents an entity that is able to provide environment variables.
-type Provider interface {
-    // LookupEnv retrieves the value of the environment variable named by the
-    // key. If it is not found, the boolean will be false.
+// Source represents a source of environment variables.
+type Source interface {
+    // LookupEnv retrieves the value of the environment variable named by the key.
     LookupEnv(key string) (value string, ok bool)
 }
 ```
 
-`Map` is a built-in `Provider` implementation that might be useful in tests.
+`Map` is a built-in `Source` implementation that might be useful in tests.
 
 ```go
 m := env.Map{"PORT": "8080"}
@@ -137,14 +136,14 @@ if err := env.LoadFrom(m, &cfg); err != nil {
 fmt.Println(cfg.Port) // 8080
 ```
 
-Multiple providers can be combined into a single one using `MultiProvider`. The
-order of the given providers matters: if the same key is found in several
-providers, the value from the last one takes the precedence.
+Multiple sources can be combined into a single one using `MultiSource`. The
+order of the given sources matters: if the same key is found in several
+sources, the value from the last one takes the precedence.
 
 ```go
 os.Setenv("HOST", "localhost")
 
-p := env.MultiProvider(
+src := env.MultiSource(
     env.OS,
     env.Map{"PORT": "8080"},
 )
@@ -153,7 +152,7 @@ var cfg struct {
     Host string `env:"HOST,required"`
     Port int    `env:"PORT,required"`
 }
-if err := env.LoadFrom(p, &cfg); err != nil {
+if err := env.LoadFrom(src, &cfg); err != nil {
     // handle error
 }
 

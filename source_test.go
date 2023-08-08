@@ -8,8 +8,8 @@ import (
 	. "go-simpler.org/env/internal/assert/dotimport"
 )
 
-func TestProviderFunc_LookupEnv(t *testing.T) {
-	f := env.ProviderFunc(func(key string) (value string, ok bool) {
+func TestSourceFunc_LookupEnv(t *testing.T) {
+	f := env.SourceFunc(func(key string) (string, bool) {
 		switch key {
 		case "FOO":
 			return "1", true
@@ -53,7 +53,7 @@ func TestMap_LookupEnv(t *testing.T) {
 	assert.Equal[E](t, cfg.Baz, 3)
 }
 
-func TestMultiProvider(t *testing.T) {
+func TestMultiSource(t *testing.T) {
 	m1 := env.Map{
 		"FOO": "1",
 		"BAR": "2",
@@ -62,7 +62,7 @@ func TestMultiProvider(t *testing.T) {
 		"BAR": "3", // overrides BAR from m1.
 		"BAZ": "4",
 	}
-	p := env.MultiProvider(m1, m2)
+	p := env.MultiSource(m1, m2)
 
 	var cfg struct {
 		Foo int `env:"FOO,required"`

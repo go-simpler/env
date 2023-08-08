@@ -9,9 +9,9 @@ import (
 	"strings"
 )
 
-// Load loads environment variables into the provided struct using the [OS] [Provider] as their source.
-// To specify a custom [Provider], use the [LoadFrom] function.
-// dst must be a non-nil struct pointer, otherwise Load panics.
+// Load loads environment variables into the provided struct using the [OS] [Source].
+// To specify a custom [Source], use the [LoadFrom] function.
+// cfg must be a non-nil struct pointer, otherwise Load panics.
 //
 // The struct fields must have the `env:"VAR"` struct tag, where VAR is the name of the corresponding environment variable.
 // Unexported fields are ignored.
@@ -52,14 +52,14 @@ import (
 //   - [WithUsageOnError]: enables a usage message printing when an error occurs
 //
 // See their documentation for details.
-func Load(dst any, opts ...Option) error {
-	return newLoader(OS, opts...).loadVars(dst)
+func Load(cfg any, opts ...Option) error {
+	return newLoader(OS, opts...).loadVars(cfg)
 }
 
-// LoadFrom loads environment variables into the provided struct using the specified [Provider] as their source.
+// LoadFrom loads environment variables into the provided struct using the specified [Source].
 // See [Load] documentation for more details.
-func LoadFrom(p Provider, dst any, opts ...Option) error {
-	return newLoader(p, opts...).loadVars(dst)
+func LoadFrom(src Source, cfg any, opts ...Option) error {
+	return newLoader(src, opts...).loadVars(cfg)
 }
 
 // Option allows to configure the behaviour of the [Load]/[LoadFrom] functions.
@@ -96,15 +96,15 @@ func (e *NotSetError) Error() string {
 }
 
 type loader struct {
-	provider    Provider
+	source      Source
 	prefix      string
 	sliceSep    string
 	usageOutput io.Writer
 }
 
-func newLoader(p Provider, opts ...Option) *loader {
+func newLoader(src Source, opts ...Option) *loader {
 	l := loader{
-		provider:    p,
+		source:      src,
 		prefix:      "",
 		sliceSep:    " ",
 		usageOutput: nil,
@@ -115,13 +115,13 @@ func newLoader(p Provider, opts ...Option) *loader {
 	return &l
 }
 
-func (l *loader) loadVars(dst any) (err error) {
-	rv := reflect.ValueOf(dst)
-	if !structPtr(rv) {
+func (l *loader) loadVars(cfg any) (err error) {
+	v := reflect.ValueOf(cfg)
+	if !structPtr(v) {
 		panic("env: argument must be a non-nil struct pointer")
 	}
 
-	vars := l.parseVars(rv.Elem())
+	vars := l.parseVars(v.Elem())
 	defer func() {
 		if err != nil && l.usageOutput != nil {
 			Usage(l.usageOutput, vars)
@@ -226,7 +226,7 @@ func (l *loader) parseVars(v reflect.Value) []Var {
 }
 
 func (l *loader) lookupEnv(key string, expand bool) (string, bool) {
-	value, ok := l.provider.LookupEnv(key)
+	value, ok := l.source.LookupEnv(key)
 	if !ok {
 		return "", false
 	}
@@ -236,7 +236,7 @@ func (l *loader) lookupEnv(key string, expand bool) (string, bool) {
 	}
 
 	mapping := func(key string) string {
-		v, _ := l.provider.LookupEnv(key)
+		v, _ := l.source.LookupEnv(key)
 		return v
 	}
 
