@@ -22,16 +22,7 @@ func TestSourceFunc_LookupEnv(t *testing.T) {
 		}
 	})
 
-	var cfg struct {
-		Foo int `env:"FOO,required"`
-		Bar int `env:"BAR,required"`
-		Baz int `env:"BAZ,required"`
-	}
-	err := env.Load(&cfg, env.WithSource(fn))
-	assert.NoErr[F](t, err)
-	assert.Equal[E](t, cfg.Foo, 1)
-	assert.Equal[E](t, cfg.Bar, 2)
-	assert.Equal[E](t, cfg.Baz, 3)
+	testSource(t, fn)
 }
 
 func TestMap_LookupEnv(t *testing.T) {
@@ -41,29 +32,10 @@ func TestMap_LookupEnv(t *testing.T) {
 		"BAZ": "3",
 	}
 
-	var cfg struct {
-		Foo int `env:"FOO,required"`
-		Bar int `env:"BAR,required"`
-		Baz int `env:"BAZ,required"`
-	}
-	err := env.Load(&cfg, env.WithSource(m))
-	assert.NoErr[F](t, err)
-	assert.Equal[E](t, cfg.Foo, 1)
-	assert.Equal[E](t, cfg.Bar, 2)
-	assert.Equal[E](t, cfg.Baz, 3)
+	testSource(t, m)
 }
 
-func TestMultiSource(t *testing.T) {
-	m1 := env.Map{
-		"FOO": "1",
-		"BAR": "2",
-	}
-	m2 := env.Map{
-		"BAR": "3", // overrides BAR from m1.
-		"BAZ": "4",
-	}
-	src := env.MultiSource(m1, m2)
-
+func testSource(t *testing.T, src env.Source) {
 	var cfg struct {
 		Foo int `env:"FOO,required"`
 		Bar int `env:"BAR,required"`
@@ -72,6 +44,6 @@ func TestMultiSource(t *testing.T) {
 	err := env.Load(&cfg, env.WithSource(src))
 	assert.NoErr[F](t, err)
 	assert.Equal[E](t, cfg.Foo, 1)
-	assert.Equal[E](t, cfg.Bar, 3)
-	assert.Equal[E](t, cfg.Baz, 4)
+	assert.Equal[E](t, cfg.Bar, 2)
+	assert.Equal[E](t, cfg.Baz, 3)
 }

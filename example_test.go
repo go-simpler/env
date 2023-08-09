@@ -96,6 +96,24 @@ func ExampleWithSource() {
 	fmt.Println(cfg.Port) // 8080
 }
 
+func ExampleWithSource_multiple() {
+	m := env.Map{"PORT": "8080"}
+
+	os.Setenv("HOST", "localhost")
+	os.Setenv("PORT", "8081") // overrides PORT from m.
+
+	var cfg struct {
+		Host string `env:"HOST,required"`
+		Port int    `env:"PORT,required"`
+	}
+	if err := env.Load(&cfg, env.WithSource(m, env.OS)); err != nil {
+		// handle error
+	}
+
+	fmt.Println(cfg.Host) // localhost
+	fmt.Println(cfg.Port) // 8081
+}
+
 func ExampleWithPrefix() {
 	os.Setenv("APP_PORT", "8080")
 
@@ -150,24 +168,4 @@ func ExampleWithUsageOnError() {
 	//   DB_PORT    int              required            database port
 	//   HTTP_PORT  int              default 8080        http server port
 	//   TIMEOUTS   []time.Duration  default [1s 2s 3s]  timeout steps
-}
-
-func ExampleMultiSource() {
-	os.Setenv("HOST", "localhost")
-
-	src := env.MultiSource(
-		env.OS,
-		env.Map{"PORT": "8080"},
-	)
-
-	var cfg struct {
-		Host string `env:"HOST,required"`
-		Port int    `env:"PORT,required"`
-	}
-	if err := env.Load(&cfg, env.WithSource(src)); err != nil {
-		// handle error
-	}
-
-	fmt.Println(cfg.Host) // localhost
-	fmt.Println(cfg.Port) // 8080
 }

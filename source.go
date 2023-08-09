@@ -26,20 +26,13 @@ func (m Map) LookupEnv(key string) (string, bool) {
 	return value, ok
 }
 
-// MultiSource combines multiple sources into a single one containing the union of all environment variables.
-// The order of the given sources matters: if the same key occurs more than once, the later value takes precedence.
-func MultiSource(ss ...Source) Source { return sources(ss) }
+type multiSource []Source
 
-type sources []Source
-
-func (ss sources) LookupEnv(key string) (string, bool) {
-	var value string
-	var found bool
-	for _, s := range ss {
-		if v, ok := s.LookupEnv(key); ok {
-			value = v
-			found = true
+func (ms multiSource) LookupEnv(key string) (string, bool) {
+	for _, src := range ms {
+		if value, ok := src.LookupEnv(key); ok {
+			return value, true
 		}
 	}
-	return value, found
+	return "", false
 }
