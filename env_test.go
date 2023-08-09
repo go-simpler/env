@@ -146,23 +146,18 @@ func TestLoad(t *testing.T) {
 	})
 
 	t.Run("with source", func(t *testing.T) {
-		m1 := env.Map{
-			"FOO": "1",
-			"BAR": "2",
-		}
-		m2 := env.Map{
-			"BAR": "3", // overrides BAR from m1.
-			"BAZ": "4",
-		}
+		m1 := env.Map{"FOO": "1", "BAR": "2"}
+		m2 := env.Map{"FOO": "2", "BAZ": "3"}
+		m3 := env.Map{"BAR": "3", "BAZ": "4"}
 
 		var cfg struct {
 			Foo int `env:"FOO,required"`
 			Bar int `env:"BAR,required"`
 			Baz int `env:"BAZ,required"`
 		}
-		err := env.Load(&cfg, env.WithSource(m1, m2))
+		err := env.Load(&cfg, env.WithSource(m1, m2, m3))
 		assert.NoErr[F](t, err)
-		assert.Equal[E](t, cfg.Foo, 1)
+		assert.Equal[E](t, cfg.Foo, 2)
 		assert.Equal[E](t, cfg.Bar, 3)
 		assert.Equal[E](t, cfg.Baz, 4)
 	})
