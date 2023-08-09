@@ -15,12 +15,12 @@ import (
 
 //go:generate go run -tags=copier go-simpler.org/assert/cmd/copier@v0.6.0 internal
 
-func TestLoadFrom(t *testing.T) {
+func TestLoad(t *testing.T) {
 	t.Run("invalid argument", func(t *testing.T) {
-		test := func(name string, dst any) {
+		test := func(name string, cfg any) {
 			t.Run(name, func(t *testing.T) {
 				assert.Panics[E](t,
-					func() { _ = env.LoadFrom(env.Map{}, dst) },
+					func() { _ = env.Load(cfg, env.WithSource(env.Map{})) },
 					"env: argument must be a non-nil struct pointer",
 				)
 			})
@@ -37,7 +37,7 @@ func TestLoadFrom(t *testing.T) {
 			Port string `env:""`
 		}
 		assert.Panics[E](t,
-			func() { _ = env.LoadFrom(env.Map{}, &cfg) },
+			func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) },
 			"env: empty tag name is not allowed",
 		)
 	})
@@ -49,7 +49,7 @@ func TestLoadFrom(t *testing.T) {
 			Port complex64 `env:"PORT"`
 		}
 		assert.Panics[E](t,
-			func() { _ = env.LoadFrom(m, &cfg) },
+			func() { _ = env.Load(&cfg, env.WithSource(m)) },
 			"env: unsupported type `complex64`",
 		)
 	})
@@ -64,7 +64,7 @@ func TestLoadFrom(t *testing.T) {
 			unexported string `env:"UNEXPORTED"`
 			MissingTag string
 		}
-		err := env.LoadFrom(m, &cfg)
+		err := env.Load(&cfg, env.WithSource(m))
 		assert.NoErr[F](t, err)
 		assert.Equal[E](t, cfg.unexported, "")
 		assert.Equal[E](t, cfg.MissingTag, "")
@@ -77,7 +77,7 @@ func TestLoadFrom(t *testing.T) {
 		}{
 			Port: 8000, // must be overridden with 8080 (from the `default` tag).
 		}
-		err := env.LoadFrom(env.Map{}, &cfg)
+		err := env.Load(&cfg, env.WithSource(env.Map{}))
 		assert.NoErr[F](t, err)
 		assert.Equal[E](t, cfg.Host, "localhost")
 		assert.Equal[E](t, cfg.Port, 8080)
@@ -97,7 +97,7 @@ func TestLoadFrom(t *testing.T) {
 				Port int `env:"HTTP_PORT"`
 			}
 		}
-		err := env.LoadFrom(m, &cfg)
+		err := env.Load(&cfg, env.WithSource(m))
 		assert.NoErr[F](t, err)
 		assert.Equal[E](t, cfg.DB.Port, 5432)
 		assert.Equal[E](t, cfg.HTTP.Port, 8080)
@@ -110,7 +110,7 @@ func TestLoadFrom(t *testing.T) {
 			Host string `env:"HOST,required"`
 			Port int    `env:"PORT,required"`
 		}
-		err := env.LoadFrom(env.Map{}, &cfg)
+		err := env.Load(&cfg, env.WithSource(env.Map{}))
 		assert.AsErr[F](t, err, &notSetErr)
 		assert.Equal[E](t, notSetErr.Names, []string{"HOST", "PORT"})
 
@@ -128,7 +128,7 @@ func TestLoadFrom(t *testing.T) {
 		var cfg struct {
 			Addr string `env:"ADDR,expand"`
 		}
-		err := env.LoadFrom(m, &cfg)
+		err := env.Load(&cfg, env.WithSource(m))
 		assert.NoErr[F](t, err)
 		assert.Equal[E](t, cfg.Addr, "localhost:8080")
 	})
@@ -140,9 +140,26 @@ func TestLoadFrom(t *testing.T) {
 			}
 		}
 		assert.Panics[E](t,
-			func() { _ = env.LoadFrom(env.Map{}, &cfg) },
+			func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) },
 			"env: invalid tag option `foo`",
 		)
+	})
+
+	t.Run("with source", func(t *testing.T) {
+		m1 := env.Map{"FOO": "1", "BAR": "2"}
+		m2 := env.Map{"FOO": "2", "BAZ": "3"}
+		m3 := env.Map{"BAR": "3", "BAZ": "4"}
+
+		var cfg struct {
+			Foo int `env:"FOO,required"`
+			Bar int `env:"BAR,required"`
+			Baz int `env:"BAZ,required"`
+		}
+		err := env.Load(&cfg, env.WithSource(m1, m2, m3))
+		assert.NoErr[F](t, err)
+		assert.Equal[E](t, cfg.Foo, 2)
+		assert.Equal[E](t, cfg.Bar, 3)
+		assert.Equal[E](t, cfg.Baz, 4)
 	})
 
 	t.Run("with prefix", func(t *testing.T) {
@@ -151,7 +168,7 @@ func TestLoadFrom(t *testing.T) {
 		var cfg struct {
 			Port int `env:"PORT"`
 		}
-		err := env.LoadFrom(m, &cfg, env.WithPrefix("APP_"))
+		err := env.Load(&cfg, env.WithSource(m), env.WithPrefix("APP_"))
 		assert.NoErr[F](t, err)
 		assert.Equal[E](t, cfg.Port, 8080)
 	})
@@ -162,7 +179,7 @@ func TestLoadFrom(t *testing.T) {
 		var cfg struct {
 			Ports []int `env:"PORTS"`
 		}
-		err := env.LoadFrom(m, &cfg, env.WithSliceSeparator(";"))
+		err := env.Load(&cfg, env.WithSource(m), env.WithSliceSeparator(";"))
 		assert.NoErr[F](t, err)
 		assert.Equal[E](t, cfg.Ports, []int{8080, 8081, 8082})
 	})
@@ -179,7 +196,7 @@ func TestLoadFrom(t *testing.T) {
 		var cfg struct {
 			Port int `env:"PORT,required"`
 		}
-		err := env.LoadFrom(env.Map{}, &cfg, env.WithUsageOnError(io.Discard))
+		err := env.Load(&cfg, env.WithSource(env.Map{}), env.WithUsageOnError(io.Discard))
 		assert.AsErr[F](t, err, new(*env.NotSetError))
 		assert.Equal[E](t, called, true)
 	})
@@ -238,7 +255,7 @@ func TestLoadFrom(t *testing.T) {
 			IP        net.IP          `env:"IP"`
 			IPs       []net.IP        `env:"IPS"`
 		}
-		err := env.LoadFrom(m, &cfg)
+		err := env.Load(&cfg, env.WithSource(m))
 		assert.NoErr[F](t, err)
 
 		test := func(name string, got, want any) {
@@ -297,7 +314,7 @@ func TestLoadFrom(t *testing.T) {
 					Unmarshaler net.IP        `env:"UNMARSHALER"`
 					Slice       []net.IP      `env:"SLICE"`
 				}
-				err := env.LoadFrom(m, &cfg)
+				err := env.Load(&cfg, env.WithSource(m))
 				assert.Equal[E](t, checkErr(err), true)
 			})
 		}

@@ -83,37 +83,35 @@ func ExampleLoad_expand() {
 	fmt.Println(cfg.Addr) // localhost:8080
 }
 
-func ExampleLoadFrom() {
+func ExampleWithSource() {
 	m := env.Map{"PORT": "8080"}
 
 	var cfg struct {
 		Port int `env:"PORT"`
 	}
-	if err := env.LoadFrom(m, &cfg); err != nil {
+	if err := env.Load(&cfg, env.WithSource(m)); err != nil {
 		// handle error
 	}
 
 	fmt.Println(cfg.Port) // 8080
 }
 
-func ExampleMultiSource() {
-	os.Setenv("HOST", "localhost")
+func ExampleWithSource_multiple() {
+	m := env.Map{"PORT": "8080"}
 
-	src := env.MultiSource(
-		env.OS,
-		env.Map{"PORT": "8080"},
-	)
+	os.Setenv("HOST", "localhost")
+	os.Setenv("PORT", "8081") // overrides PORT from m.
 
 	var cfg struct {
 		Host string `env:"HOST,required"`
 		Port int    `env:"PORT,required"`
 	}
-	if err := env.LoadFrom(src, &cfg); err != nil {
+	if err := env.Load(&cfg, env.WithSource(m, env.OS)); err != nil {
 		// handle error
 	}
 
 	fmt.Println(cfg.Host) // localhost
-	fmt.Println(cfg.Port) // 8080
+	fmt.Println(cfg.Port) // 8081
 }
 
 func ExampleWithPrefix() {
