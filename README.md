@@ -29,9 +29,8 @@ go get go-simpler.org/env
 
 * Simple API
 * Dependency-free
-* Custom [sources](#source)
 * Per-variable options: [required](#required), [expand](#expand)
-* Global options: [prefix](#prefix), [slice separator](#slice-separator)
+* Global options: [source](#source), [prefix](#prefix), [slice separator](#slice-separator)
 * Auto-generated [usage message](#usage-on-error)
 
 ## 📋 Usage
@@ -105,60 +104,7 @@ fmt.Println(cfg.Host) // localhost
 fmt.Println(cfg.Port) // 8080
 ```
 
-## 🔧 Configuration
-
-### Source
-
-`Load` retrieves environment variables values directly from OS. To use a
-different source, try `LoadFrom` that accepts an implementation of the
-`Source` interface as the first argument.
-
-```go
-// Source represents a source of environment variables.
-type Source interface {
-    // LookupEnv retrieves the value of the environment variable named by the key.
-    LookupEnv(key string) (value string, ok bool)
-}
-```
-
-`Map` is a built-in `Source` implementation that might be useful in tests.
-
-```go
-m := env.Map{"PORT": "8080"}
-
-var cfg struct {
-    Port int `env:"PORT"`
-}
-if err := env.LoadFrom(m, &cfg); err != nil {
-    // handle error
-}
-
-fmt.Println(cfg.Port) // 8080
-```
-
-Multiple sources can be combined into a single one using `MultiSource`. The
-order of the given sources matters: if the same key is found in several
-sources, the value from the last one takes the precedence.
-
-```go
-os.Setenv("HOST", "localhost")
-
-src := env.MultiSource(
-    env.OS,
-    env.Map{"PORT": "8080"},
-)
-
-var cfg struct {
-    Host string `env:"HOST,required"`
-    Port int    `env:"PORT,required"`
-}
-if err := env.LoadFrom(src, &cfg); err != nil {
-    // handle error
-}
-
-fmt.Println(cfg.Host) // localhost
-fmt.Println(cfg.Port) // 8080
-```
+## 🔧 Options
 
 ### Per-variable options
 
@@ -207,8 +153,35 @@ fmt.Println(cfg.Addr) // localhost:8080
 
 ### Global options
 
-In addition to the per-variable options, `env` also supports global options that
-apply to all variables.
+`Load` also accepts global options that apply to all environment variables.
+
+#### Source
+
+By default, `Load` retrieves environment variables values directly from OS.
+To use a different source, provide an implementation of the `Source` interface via the `WithSource` option.
+
+```go
+// Source represents a source of environment variables.
+type Source interface {
+    // LookupEnv retrieves the value of the environment variable named by the key.
+    LookupEnv(key string) (value string, ok bool)
+}
+```
+
+Here's an example of using `Map`, a builtin `Source` implementation useful in tests:
+
+```go
+m := env.Map{"PORT": "8080"}
+
+var cfg struct {
+    Port int `env:"PORT"`
+}
+if err := env.Load(&cfg, env.WithSource(m)); err != nil {
+    // handle error
+}
+
+fmt.Println(cfg.Port) // 8080
+```
 
 #### Prefix
 
