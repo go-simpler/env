@@ -107,7 +107,7 @@ func newLoader(opts []Option) *loader {
 func (l *loader) loadVars(cfg any) error {
 	v := reflect.ValueOf(cfg)
 	if !structPtr(v) {
-		panic("env: argument must be a non-nil struct pointer")
+		panic("env: cfg must be a non-nil struct pointer")
 	}
 
 	vars := l.parseVars(v.Elem())

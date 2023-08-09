@@ -23,7 +23,7 @@ type Var struct {
 func Usage(cfg any, w io.Writer) {
 	v := reflect.ValueOf(cfg)
 	if !structPtr(v) {
-		panic("env: argument must be a non-nil struct pointer")
+		panic("env: cfg must be a non-nil struct pointer")
 	}
 
 	vars := newLoader(nil).parseVars(v.Elem())

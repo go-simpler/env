@@ -2,6 +2,7 @@ package env_test
 
 import (
 	"errors"
+	"io"
 	"net"
 	"strconv"
 	"testing"
@@ -18,10 +19,9 @@ func TestLoad(t *testing.T) {
 	t.Run("invalid argument", func(t *testing.T) {
 		test := func(name string, cfg any) {
 			t.Run(name, func(t *testing.T) {
-				assert.Panics[E](t,
-					func() { _ = env.Load(cfg, env.WithSource(env.Map{})) },
-					"env: argument must be a non-nil struct pointer",
-				)
+				const v = "env: cfg must be a non-nil struct pointer"
+				assert.Panics[E](t, func() { _ = env.Load(cfg, env.WithSource(env.Map{})) }, v)
+				assert.Panics[E](t, func() { env.Usage(cfg, io.Discard) }, v)
 			})
 		}
 
