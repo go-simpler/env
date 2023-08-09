@@ -87,14 +87,14 @@ func (e *NotSetError) Error() string {
 }
 
 type loader struct {
-	source      Source
+	source   Source
 	prefix   string
 	sliceSep string
 }
 
 func newLoader(opts []Option) *loader {
 	l := loader{
-		source:      OS,
+		source:   OS,
 		prefix:   "",
 		sliceSep: " ",
 	}
