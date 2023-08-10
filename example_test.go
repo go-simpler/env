@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"time"
 
 	"go-simpler.org/env"
 )
@@ -147,16 +146,12 @@ func ExampleUsage() {
 	// os.Setenv("DB_HOST", "localhost")
 	// os.Setenv("DB_PORT", "5432")
 
-	cfg := struct {
+	var cfg struct {
 		DB struct {
 			Host string `env:"DB_HOST,required" desc:"database host"`
 			Port int    `env:"DB_PORT,required" desc:"database port"`
 		}
-		HTTPPort int             `env:"HTTP_PORT" desc:"http server port"`
-		Timeouts []time.Duration `env:"TIMEOUTS" desc:"timeout steps"`
-	}{
-		HTTPPort: 8080,
-		Timeouts: []time.Duration{1 * time.Second, 2 * time.Second, 3 * time.Second},
+		HTTPPort int `env:"HTTP_PORT" default:"8080" desc:"http server port"`
 	}
 	if err := env.Load(&cfg); err != nil {
 		// handle error
@@ -165,8 +160,7 @@ func ExampleUsage() {
 
 	// Output:
 	// Usage:
-	//   DB_HOST    string           required            database host
-	//   DB_PORT    int              required            database port
-	//   HTTP_PORT  int              default 8080        http server port
-	//   TIMEOUTS   []time.Duration  default [1s 2s 3s]  timeout steps
+	//   DB_HOST    string  required      database host
+	//   DB_PORT    int     required      database port
+	//   HTTP_PORT  int     default 8080  http server port
 }
