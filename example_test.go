@@ -15,13 +15,17 @@ func ExampleLoad() {
 		Port int `env:"PORT"`
 	}
 	if err := env.Load(&cfg); err != nil {
-		// handle error
+		fmt.Println(err)
 	}
 
-	fmt.Println(cfg.Port) // 8080
+	fmt.Println(cfg.Port)
+	// Output: 8080
 }
 
 func ExampleLoad_defaultValue() {
+	os.Unsetenv("HOST")
+	os.Unsetenv("PORT")
+
 	cfg := struct {
 		Host string `env:"HOST" default:"localhost"` // either use the `default` tag...
 		Port int    `env:"PORT"`
@@ -29,11 +33,11 @@ func ExampleLoad_defaultValue() {
 		Port: 8080, // ...or initialize the struct field directly.
 	}
 	if err := env.Load(&cfg); err != nil {
-		// handle error
+		fmt.Println(err)
 	}
 
-	fmt.Println(cfg.Host) // localhost
-	fmt.Println(cfg.Port) // 8080
+	fmt.Println(cfg.Host, cfg.Port)
+	// Output: localhost 8080
 }
 
 func ExampleLoad_nestedStruct() {
@@ -45,16 +49,16 @@ func ExampleLoad_nestedStruct() {
 		}
 	}
 	if err := env.Load(&cfg); err != nil {
-		// handle error
+		fmt.Println(err)
 	}
 
-	fmt.Println(cfg.HTTP.Port) // 8080
+	fmt.Println(cfg.HTTP.Port)
+	// Output: 8080
 }
 
-//nolint:gocritic //commentedOutCode
 func ExampleLoad_required() {
-	// os.Setenv("HOST", "localhost")
-	// os.Setenv("PORT", "8080")
+	os.Unsetenv("HOST")
+	os.Unsetenv("PORT")
 
 	var cfg struct {
 		Host string `env:"HOST,required"`
@@ -63,9 +67,11 @@ func ExampleLoad_required() {
 	if err := env.Load(&cfg); err != nil {
 		var notSetErr *env.NotSetError
 		if errors.As(err, &notSetErr) {
-			fmt.Println(notSetErr.Names) // [HOST PORT]
+			fmt.Println(notSetErr.Names)
 		}
 	}
+
+	// Output: [HOST PORT]
 }
 
 func ExampleLoad_expand() {
@@ -76,10 +82,11 @@ func ExampleLoad_expand() {
 		Addr string `env:"ADDR,expand"`
 	}
 	if err := env.Load(&cfg); err != nil {
-		// handle error
+		fmt.Println(err)
 	}
 
-	fmt.Println(cfg.Addr) // localhost:8080
+	fmt.Println(cfg.Addr)
+	// Output: localhost:8080
 }
 
 func ExampleWithSource() {
@@ -89,10 +96,11 @@ func ExampleWithSource() {
 		Port int `env:"PORT"`
 	}
 	if err := env.Load(&cfg, env.WithSource(m)); err != nil {
-		// handle error
+		fmt.Println(err)
 	}
 
-	fmt.Println(cfg.Port) // 8080
+	fmt.Println(cfg.Port)
+	// Output: 8080
 }
 
 func ExampleWithSource_multiple() {
@@ -102,15 +110,15 @@ func ExampleWithSource_multiple() {
 	os.Setenv("PORT", "8081") // overrides PORT from m.
 
 	var cfg struct {
-		Host string `env:"HOST,required"`
-		Port int    `env:"PORT,required"`
+		Host string `env:"HOST"`
+		Port int    `env:"PORT"`
 	}
 	if err := env.Load(&cfg, env.WithSource(m, env.OS)); err != nil {
-		// handle error
+		fmt.Println(err)
 	}
 
-	fmt.Println(cfg.Host) // localhost
-	fmt.Println(cfg.Port) // 8081
+	fmt.Println(cfg.Host, cfg.Port)
+	// Output: localhost 8081
 }
 
 func ExampleWithPrefix() {
@@ -120,10 +128,11 @@ func ExampleWithPrefix() {
 		Port int `env:"PORT"`
 	}
 	if err := env.Load(&cfg, env.WithPrefix("APP_")); err != nil {
-		// handle error
+		fmt.Println(err)
 	}
 
-	fmt.Println(cfg.Port) // 8080
+	fmt.Println(cfg.Port)
+	// Output: 8080
 }
 
 func ExampleWithSliceSeparator() {
@@ -133,18 +142,16 @@ func ExampleWithSliceSeparator() {
 		Ports []int `env:"PORTS"`
 	}
 	if err := env.Load(&cfg, env.WithSliceSeparator(";")); err != nil {
-		// handle error
+		fmt.Println(err)
 	}
 
-	fmt.Println(cfg.Ports[0]) // 8080
-	fmt.Println(cfg.Ports[1]) // 8081
-	fmt.Println(cfg.Ports[2]) // 8082
+	fmt.Println(cfg.Ports)
+	// Output: [8080 8081 8082]
 }
 
-//nolint:gocritic //commentedOutCode
 func ExampleUsage() {
-	// os.Setenv("DB_HOST", "localhost")
-	// os.Setenv("DB_PORT", "5432")
+	os.Unsetenv("DB_HOST")
+	os.Unsetenv("DB_PORT")
 
 	var cfg struct {
 		DB struct {
@@ -154,11 +161,11 @@ func ExampleUsage() {
 		HTTPPort int `env:"HTTP_PORT" default:"8080" desc:"http server port"`
 	}
 	if err := env.Load(&cfg); err != nil {
-		// handle error
+		fmt.Println(err)
 		env.Usage(&cfg, os.Stdout)
 	}
 
-	// Output:
+	// Output: env: [DB_HOST DB_PORT] are required but not set
 	// Usage:
 	//   DB_HOST    string  required      database host
 	//   DB_PORT    int     required      database port
