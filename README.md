@@ -31,7 +31,7 @@ go get go-simpler.org/env
 * Dependency-free
 * Per-variable options: [required](#required), [expand](#expand)
 * Global options: [source](#source), [prefix](#prefix), [slice separator](#slice-separator)
-* Auto-generated [usage message](#usage-on-error)
+* Auto-generated [usage message](#usage-message)
 
 ## 📋 Usage
 
@@ -48,10 +48,11 @@ var cfg struct {
     Port int `env:"PORT"`
 }
 if err := env.Load(&cfg); err != nil {
-    // handle error
+    fmt.Println(err)
 }
 
-fmt.Println(cfg.Port) // 8080
+fmt.Println(cfg.Port)
+// Output: 8080
 ```
 
 ### Supported types
@@ -78,33 +79,30 @@ var cfg struct {
     }
 }
 if err := env.Load(&cfg); err != nil {
-    // handle error
+    fmt.Println(err)
 }
 
-fmt.Println(cfg.HTTP.Port) // 8080
+fmt.Println(cfg.HTTP.Port)
+// Output: 8080
 ```
 
 ### Default values
 
-Default values can be specified either using the `default` struct tag (has a
-higher priority) or by initializing the struct fields directly.
+Default values can be specified using the `default` struct tag:
 
 ```go
-cfg := struct {
-    Host string `env:"HOST" default:"localhost"` // either use the `default` tag...
-    Port int    `env:"PORT"`
-}{
-    Port: 8080, // ...or initialize the struct field directly.
+os.Unsetenv("PORT")
+
+var cfg struct {
+    Port int `env:"PORT" default:"8080"`
 }
 if err := env.Load(&cfg); err != nil {
-    // handle error
+    fmt.Println(err)
 }
 
-fmt.Println(cfg.Host) // localhost
-fmt.Println(cfg.Port) // 8080
+fmt.Println(cfg.Port)
+// Output: 8080
 ```
-
-## 🔧 Options
 
 ### Per-variable options
 
@@ -117,8 +115,8 @@ Use the `required` option to mark the environment variable as required. In case
 no such variable is found, an error of type `NotSetError` will be returned.
 
 ```go
-// os.Setenv("HOST", "localhost")
-// os.Setenv("PORT", "8080")
+os.Unsetenv("HOST")
+os.Unsetenv("PORT")
 
 var cfg struct {
     Host string `env:"HOST,required"`
@@ -127,9 +125,11 @@ var cfg struct {
 if err := env.Load(&cfg); err != nil {
     var notSetErr *env.NotSetError
     if errors.As(err, &notSetErr) {
-        fmt.Println(notSetErr.Names) // [HOST PORT]
+        fmt.Println(notSetErr.Names)
     }
 }
+
+// Output: [HOST PORT]
 ```
 
 #### Expand
@@ -142,13 +142,14 @@ os.Setenv("PORT", "8080")
 os.Setenv("ADDR", "localhost:${PORT}")
 
 var cfg struct {
-	Addr string `env:"ADDR,expand"`
+    Addr string `env:"ADDR,expand"`
 }
 if err := env.Load(&cfg); err != nil {
-	// handle error
+    fmt.Println(err)
 }
 
-fmt.Println(cfg.Addr) // localhost:8080
+fmt.Println(cfg.Addr)
+// Output: localhost:8080
 ```
 
 ### Global options
@@ -177,10 +178,11 @@ var cfg struct {
     Port int `env:"PORT"`
 }
 if err := env.Load(&cfg, env.WithSource(m)); err != nil {
-    // handle error
+    fmt.Println(err)
 }
 
-fmt.Println(cfg.Port) // 8080
+fmt.Println(cfg.Port)
+// Output: 8080
 ```
 
 #### Prefix
@@ -195,10 +197,11 @@ var cfg struct {
     Port int `env:"PORT"`
 }
 if err := env.Load(&cfg, env.WithPrefix("APP_")); err != nil {
-    // handle error
+    fmt.Println(err)
 }
 
-fmt.Println(cfg.Port) // 8080
+fmt.Println(cfg.Port)
+// Output: 8080
 ```
 
 #### Slice separator
@@ -213,45 +216,35 @@ var cfg struct {
     Ports []int `env:"PORTS"`
 }
 if err := env.Load(&cfg, env.WithSliceSeparator(";")); err != nil {
-    // handle error
+    fmt.Println(err)
 }
 
-fmt.Println(cfg.Ports[0]) // 8080
-fmt.Println(cfg.Ports[1]) // 8081
-fmt.Println(cfg.Ports[2]) // 8082
+fmt.Println(cfg.Ports)
+// Output: [8080 8081 8082]
 ```
 
-#### Usage on error
+### Usage message
 
-`env` supports printing an auto-generated usage message the same way the `flag`
-package does it. It will be printed if the `WithUsageOnError` option is
-provided and an error occurs while loading environment variables:
+`env` supports printing an auto-generated usage message the same way the `flag` package does it.
 
 ```go
-// os.Setenv("DB_HOST", "localhost")
-// os.Setenv("DB_PORT", "5432")
-
-cfg := struct {
+var cfg struct {
     DB struct {
         Host string `env:"DB_HOST,required" desc:"database host"`
         Port int    `env:"DB_PORT,required" desc:"database port"`
     }
-    HTTPPort int             `env:"HTTP_PORT" desc:"http server port"`
-    Timeouts []time.Duration `env:"TIMEOUTS" desc:"timeout steps"`
-}{
-    HTTPPort: 8080,
-    Timeouts: []time.Duration{1 * time.Second, 2 * time.Second, 3 * time.Second},
+    HTTPPort int `env:"HTTP_PORT" default:"8080" desc:"http server port"`
 }
-if err := env.Load(&cfg, env.WithUsageOnError(os.Stdout)); err != nil {
-    // handle error
+if err := env.Load(&cfg); err != nil {
+    fmt.Println(err)
+    env.Usage(&cfg, os.Stdout)
 }
 
-// Output:
+// Output: env: [DB_HOST DB_PORT] are required but not set
 // Usage:
-//   DB_HOST    string           required            database host
-//   DB_PORT    int              required            database port
-//   HTTP_PORT  int              default 8080        http server port
-//   TIMEOUTS   []time.Duration  default [1s 2s 3s]  timeout steps
+//   DB_HOST    string  required      database host
+//   DB_PORT    int     required      database port
+//   HTTP_PORT  int     default 8080  http server port
 ```
 
 [1]: https://12factor.net/config

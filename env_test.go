@@ -19,10 +19,9 @@ func TestLoad(t *testing.T) {
 	t.Run("invalid argument", func(t *testing.T) {
 		test := func(name string, cfg any) {
 			t.Run(name, func(t *testing.T) {
-				assert.Panics[E](t,
-					func() { _ = env.Load(cfg, env.WithSource(env.Map{})) },
-					"env: argument must be a non-nil struct pointer",
-				)
+				const v = "env: cfg must be a non-nil struct pointer"
+				assert.Panics[E](t, func() { _ = env.Load(cfg, env.WithSource(env.Map{})) }, v)
+				assert.Panics[E](t, func() { env.Usage(cfg, io.Discard) }, v)
 			})
 		}
 
@@ -182,23 +181,6 @@ func TestLoad(t *testing.T) {
 		err := env.Load(&cfg, env.WithSource(m), env.WithSliceSeparator(";"))
 		assert.NoErr[F](t, err)
 		assert.Equal[E](t, cfg.Ports, []int{8080, 8081, 8082})
-	})
-
-	t.Run("with usage on error", func(t *testing.T) {
-		usage := env.Usage
-		defer func() { env.Usage = usage }()
-
-		var called bool
-		env.Usage = func(w io.Writer, vars []env.Var) {
-			called = true
-		}
-
-		var cfg struct {
-			Port int `env:"PORT,required"`
-		}
-		err := env.Load(&cfg, env.WithSource(env.Map{}), env.WithUsageOnError(io.Discard))
-		assert.AsErr[F](t, err, new(*env.NotSetError))
-		assert.Equal[E](t, called, true)
 	})
 
 	t.Run("all supported types", func(t *testing.T) {
