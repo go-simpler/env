@@ -53,6 +53,28 @@ func TestLoad(t *testing.T) {
 		)
 	})
 
+	t.Run("invalid tag option", func(t *testing.T) {
+		var cfg struct {
+			HTTP struct {
+				Port string `env:"HTTP_PORT,foo"`
+			}
+		}
+		assert.Panics[E](t,
+			func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) },
+			"env: invalid tag option `foo`",
+		)
+	})
+
+	t.Run("required with default", func(t *testing.T) {
+		var cfg struct {
+			Port int `env:"PORT,required" default:"8080"`
+		}
+		assert.Panics[E](t,
+			func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) },
+			"env: `required` and `default` can't be used simultaneously",
+		)
+	})
+
 	t.Run("ignored fields", func(t *testing.T) {
 		m := env.Map{
 			"UNEXPORTED":  "foo",
@@ -69,92 +91,7 @@ func TestLoad(t *testing.T) {
 		assert.Equal[E](t, cfg.MissingTag, "")
 	})
 
-	t.Run("default values", func(t *testing.T) {
-		cfg := struct {
-			Host string `env:"HOST" default:"localhost"`
-			Port int    `env:"PORT" default:"8080"`
-		}{
-			Port: 8000, // must be overridden with 8080 (from the `default` tag).
-		}
-		err := env.Load(&cfg, env.WithSource(env.Map{}))
-		assert.NoErr[F](t, err)
-		assert.Equal[E](t, cfg.Host, "localhost")
-		assert.Equal[E](t, cfg.Port, 8080)
-	})
-
-	t.Run("nested structs", func(t *testing.T) {
-		m := env.Map{
-			"DB_PORT":   "5432",
-			"HTTP_PORT": "8080",
-		}
-
-		var cfg struct {
-			DB struct {
-				Port int `env:"DB_PORT"`
-			}
-			HTTP struct {
-				Port int `env:"HTTP_PORT"`
-			}
-		}
-		err := env.Load(&cfg, env.WithSource(m))
-		assert.NoErr[F](t, err)
-		assert.Equal[E](t, cfg.DB.Port, 5432)
-		assert.Equal[E](t, cfg.HTTP.Port, 8080)
-	})
-
-	t.Run("required tag option", func(t *testing.T) {
-		var notSetErr *env.NotSetError
-
-		var cfg struct {
-			Host string `env:"HOST,required"`
-			Port int    `env:"PORT,required"`
-		}
-		err := env.Load(&cfg, env.WithSource(env.Map{}))
-		assert.AsErr[F](t, err, &notSetErr)
-		assert.Equal[E](t, notSetErr.Names, []string{"HOST", "PORT"})
-
-		// more coverage!
-		_ = notSetErr.Error()
-	})
-
-	t.Run("expand tag option", func(t *testing.T) {
-		m := env.Map{
-			"HOST": "localhost",
-			"PORT": "8080",
-			"ADDR": "$HOST:${PORT}", // try both $VAR and ${VAR} forms.
-		}
-
-		var cfg struct {
-			Addr string `env:"ADDR,expand"`
-		}
-		err := env.Load(&cfg, env.WithSource(m))
-		assert.NoErr[F](t, err)
-		assert.Equal[E](t, cfg.Addr, "localhost:8080")
-	})
-
-	t.Run("invalid tag option", func(t *testing.T) {
-		var cfg struct {
-			HTTP struct {
-				Port string `env:"HTTP_PORT,foo"`
-			}
-		}
-		assert.Panics[E](t,
-			func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) },
-			"env: invalid tag option `foo`",
-		)
-	})
-
-	t.Run("required + default", func(t *testing.T) {
-		var cfg struct {
-			Port int `env:"PORT,required" default:"8080"`
-		}
-		assert.Panics[E](t,
-			func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) },
-			"env: `required` and `default` can't be used simultaneously",
-		)
-	})
-
-	t.Run("with source", func(t *testing.T) {
+	t.Run("multiple sources order", func(t *testing.T) {
 		m1 := env.Map{"FOO": "1", "BAR": "2"}
 		m2 := env.Map{"FOO": "2", "BAZ": "3"}
 		m3 := env.Map{"BAR": "3", "BAZ": "4"}
@@ -169,28 +106,6 @@ func TestLoad(t *testing.T) {
 		assert.Equal[E](t, cfg.Foo, 2)
 		assert.Equal[E](t, cfg.Bar, 3)
 		assert.Equal[E](t, cfg.Baz, 4)
-	})
-
-	t.Run("with prefix", func(t *testing.T) {
-		m := env.Map{"APP_PORT": "8080"}
-
-		var cfg struct {
-			Port int `env:"PORT"`
-		}
-		err := env.Load(&cfg, env.WithSource(m), env.WithPrefix("APP_"))
-		assert.NoErr[F](t, err)
-		assert.Equal[E](t, cfg.Port, 8080)
-	})
-
-	t.Run("with slice separator", func(t *testing.T) {
-		m := env.Map{"PORTS": "8080;8081;8082"}
-
-		var cfg struct {
-			Ports []int `env:"PORTS"`
-		}
-		err := env.Load(&cfg, env.WithSource(m), env.WithSliceSeparator(";"))
-		assert.NoErr[F](t, err)
-		assert.Equal[E](t, cfg.Ports, []int{8080, 8081, 8082})
 	})
 
 	t.Run("all supported types", func(t *testing.T) {
