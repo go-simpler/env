@@ -16,7 +16,8 @@ type Var struct {
 	Required bool         // True, if the variable is marked as required.
 	Expand   bool         // True, if the variable is marked to be expanded with [os.Expand].
 
-	field reflect.Value // the original struct field.
+	structField   reflect.Value
+	hasDefaultTag bool
 }
 
 // Usage writes a usage message to the given [io.Writer], documenting all defined environment variables.

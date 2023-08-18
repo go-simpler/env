@@ -144,6 +144,16 @@ func TestLoad(t *testing.T) {
 		)
 	})
 
+	t.Run("required + default", func(t *testing.T) {
+		var cfg struct {
+			Port int `env:"PORT,required" default:"8080"`
+		}
+		assert.Panics[E](t,
+			func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) },
+			"env: `required` and `default` can't be used simultaneously",
+		)
+	})
+
 	t.Run("with source", func(t *testing.T) {
 		m1 := env.Map{"FOO": "1", "BAR": "2"}
 		m2 := env.Map{"FOO": "2", "BAZ": "3"}

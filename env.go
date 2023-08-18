@@ -118,20 +118,21 @@ func (l *loader) loadVars(cfg any) error {
 	for _, v := range vars {
 		value, ok := l.lookupEnv(v.Name, v.Expand)
 		if !ok {
-			// if the variable is required, mark it as missing and skip the iteration...
 			if v.Required {
 				notset = append(notset, v.Name)
 				continue
 			}
-			// ...otherwise, use the default value.
+			if !v.hasDefaultTag {
+				continue // nothing to set.
+			}
 			value = v.Default
 		}
 
 		var err error
-		if kindOf(v.field, reflect.Slice) && !implements(v.field, unmarshalerIface) {
-			err = setSlice(v.field, strings.Split(value, l.sliceSep))
+		if kindOf(v.structField, reflect.Slice) && !implements(v.structField, unmarshalerIface) {
+			err = setSlice(v.structField, strings.Split(value, l.sliceSep))
 		} else {
-			err = setValue(v.field, value)
+			err = setValue(v.structField, value)
 		}
 		if err != nil {
 			return err
@@ -185,25 +186,23 @@ func (l *loader) parseVars(v reflect.Value) []Var {
 			}
 		}
 
-		// the value from the `default` tag has a higher priority.
-		defValue, ok := sf.Tag.Lookup("default")
-		if !ok {
+		defValue, defSet := sf.Tag.Lookup("default")
+		switch {
+		case defSet && required:
+			panic("env: `required` and `default` can't be used simultaneously")
+		case !defSet && !required:
 			defValue = fmt.Sprintf("%v", field.Interface())
 		}
 
-		// the variable is either required or has a default value, but not both.
-		if required {
-			defValue = ""
-		}
-
 		vars = append(vars, Var{
-			Name:     l.prefix + name,
-			Type:     field.Type(),
-			Desc:     sf.Tag.Get("desc"),
-			Default:  defValue,
-			Required: required,
-			Expand:   expand,
-			field:    field,
+			Name:          l.prefix + name,
+			Type:          field.Type(),
+			Desc:          sf.Tag.Get("desc"),
+			Default:       defValue,
+			Required:      required,
+			Expand:        expand,
+			structField:   field,
+			hasDefaultTag: defSet,
 		})
 	}
 
