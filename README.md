@@ -228,6 +228,9 @@ fmt.Println(cfg.Ports)
 `env` supports printing an auto-generated usage message the same way the `flag` package does it.
 
 ```go
+os.Unsetenv("DB_HOST")
+os.Unsetenv("DB_PORT")
+
 var cfg struct {
     DB struct {
         Host string `env:"DB_HOST,required" desc:"database host"`

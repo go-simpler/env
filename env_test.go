@@ -17,78 +17,71 @@ import (
 
 func TestLoad(t *testing.T) {
 	t.Run("invalid argument", func(t *testing.T) {
-		test := func(name string, cfg any) {
-			t.Run(name, func(t *testing.T) {
-				const v = "env: cfg must be a non-nil struct pointer"
-				assert.Panics[E](t, func() { _ = env.Load(cfg, env.WithSource(env.Map{})) }, v)
-				assert.Panics[E](t, func() { env.Usage(cfg, io.Discard) }, v)
-			})
+		tests := map[string]any{
+			"nil":                  nil,
+			"not a pointer":        struct{}{},
+			"not a struct pointer": new(int),
+			"nil struct pointer":   (*struct{})(nil),
 		}
 
-		test("nil", nil)
-		test("not a pointer", struct{}{})
-		test("not a struct pointer", new(int))
-		test("nil struct pointer", (*struct{})(nil))
+		for name, cfg := range tests {
+			t.Run(name, func(t *testing.T) {
+				const panicMsg = "env: cfg must be a non-nil struct pointer"
+
+				load := func() { _ = env.Load(cfg, env.WithSource(env.Map{})) }
+				assert.Panics[E](t, load, panicMsg)
+
+				usage := func() { env.Usage(cfg, io.Discard) }
+				assert.Panics[E](t, usage, panicMsg)
+			})
+		}
 	})
 
 	t.Run("empty tag name", func(t *testing.T) {
 		var cfg struct {
-			Port string `env:""`
+			Foo int `env:""`
 		}
-		assert.Panics[E](t,
-			func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) },
-			"env: empty tag name is not allowed",
-		)
-	})
-
-	t.Run("unsupported type", func(t *testing.T) {
-		m := env.Map{"PORT": "8080"}
-
-		var cfg struct {
-			Port complex64 `env:"PORT"`
-		}
-		assert.Panics[E](t,
-			func() { _ = env.Load(&cfg, env.WithSource(m)) },
-			"env: unsupported type `complex64`",
-		)
+		load := func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) }
+		assert.Panics[E](t, load, "env: empty tag name is not allowed")
 	})
 
 	t.Run("invalid tag option", func(t *testing.T) {
 		var cfg struct {
-			HTTP struct {
-				Port string `env:"HTTP_PORT,foo"`
-			}
+			Foo int `env:"FOO,?"`
 		}
-		assert.Panics[E](t,
-			func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) },
-			"env: invalid tag option `foo`",
-		)
+		load := func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) }
+		assert.Panics[E](t, load, "env: invalid tag option `?`")
 	})
 
 	t.Run("required with default", func(t *testing.T) {
 		var cfg struct {
-			Port int `env:"PORT,required" default:"8080"`
+			Foo int `env:"FOO,required" default:"1"`
 		}
-		assert.Panics[E](t,
-			func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) },
-			"env: `required` and `default` can't be used simultaneously",
-		)
+		load := func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) }
+		assert.Panics[E](t, load, "env: `required` and `default` can't be used simultaneously")
+	})
+
+	t.Run("unsupported type", func(t *testing.T) {
+		m := env.Map{"FOO": "1 + 2i"}
+
+		var cfg struct {
+			Foo complex64 `env:"FOO"`
+		}
+		load := func() { _ = env.Load(&cfg, env.WithSource(m)) }
+		assert.Panics[E](t, load, "env: unsupported type `complex64`")
 	})
 
 	t.Run("ignored fields", func(t *testing.T) {
-		m := env.Map{
-			"UNEXPORTED":  "foo",
-			"MISSING_TAG": "bar",
-		}
+		m := env.Map{"FOO": "1", "BAR": "2"}
 
 		var cfg struct {
-			unexported string `env:"UNEXPORTED"`
-			MissingTag string
+			foo int `env:"FOO"`
+			Bar int
 		}
 		err := env.Load(&cfg, env.WithSource(m))
 		assert.NoErr[F](t, err)
-		assert.Equal[E](t, cfg.unexported, "")
-		assert.Equal[E](t, cfg.MissingTag, "")
+		assert.Equal[E](t, cfg.foo, 0)
+		assert.Equal[E](t, cfg.Bar, 0)
 	})
 
 	t.Run("multiple sources order", func(t *testing.T) {
@@ -97,9 +90,9 @@ func TestLoad(t *testing.T) {
 		m3 := env.Map{"BAR": "3", "BAZ": "4"}
 
 		var cfg struct {
-			Foo int `env:"FOO,required"`
-			Bar int `env:"BAR,required"`
-			Baz int `env:"BAZ,required"`
+			Foo int `env:"FOO"`
+			Bar int `env:"BAR"`
+			Baz int `env:"BAZ"`
 		}
 		err := env.Load(&cfg, env.WithSource(m1, m2, m3))
 		assert.NoErr[F](t, err)
@@ -120,11 +113,11 @@ func TestLoad(t *testing.T) {
 			"UINT16": "16", "UINT16S": "0 16",
 			"UINT32": "32", "UINT32S": "0 32",
 			"UINT64": "64", "UINT64S": "0 64",
-			"FLOAT32": "0.1", "FLOAT32S": "0.1 0.2 0.3",
-			"FLOAT64": "0.2", "FLOAT64S": "0.2 0.4 0.6",
+			"FLOAT32": "0.32", "FLOAT32S": "0.32 0.64",
+			"FLOAT64": "0.64", "FLOAT64S": "0.64 0.32",
 			"BOOL": "true", "BOOLS": "true false",
-			"STRING": "foo", "STRINGS": "foo bar baz",
-			"DURATION": "1s", "DURATIONS": "1s 1m 1h",
+			"STRING": "foo", "STRINGS": "foo bar",
+			"DURATION": "1s", "DURATIONS": "1s 1m",
 			"IP": "0.0.0.0", "IPS": "0.0.0.0 255.255.255.255",
 		}
 
@@ -164,84 +157,89 @@ func TestLoad(t *testing.T) {
 		}
 		err := env.Load(&cfg, env.WithSource(m))
 		assert.NoErr[F](t, err)
-
-		test := func(name string, got, want any) {
-			t.Run(name, func(t *testing.T) {
-				assert.Equal[E](t, got, want)
-			})
-		}
-
-		test("int", cfg.Int, -1)
-		test("ints", cfg.Ints, []int{-1, 0})
-		test("int8", cfg.Int8, int8(-8))
-		test("int8s", cfg.Int8s, []int8{-8, 0})
-		test("int16", cfg.Int16, int16(-16))
-		test("int16s", cfg.Int16s, []int16{-16, 0})
-		test("int32", cfg.Int32, int32(-32))
-		test("int32s", cfg.Int32s, []int32{-32, 0})
-		test("int64", cfg.Int64, int64(-64))
-		test("int64s", cfg.Int64s, []int64{-64, 0})
-		test("uint", cfg.Uint, uint(1))
-		test("uints", cfg.Uints, []uint{0, 1})
-		test("uint8", cfg.Uint8, uint8(8))
-		test("uint8s", cfg.Uint8s, []uint8{0, 8})
-		test("uint16", cfg.Uint16, uint16(16))
-		test("uint16s", cfg.Uint16s, []uint16{0, 16})
-		test("uint32", cfg.Uint32, uint32(32))
-		test("uint32s", cfg.Uint32s, []uint32{0, 32})
-		test("uint64", cfg.Uint64, uint64(64))
-		test("uint64s", cfg.Uint64s, []uint64{0, 64})
-		test("float32", cfg.Float32, float32(0.1))
-		test("float32s", cfg.Float32s, []float32{0.1, 0.2, 0.3})
-		test("float64", cfg.Float64, 0.2)
-		test("float64s", cfg.Float64s, []float64{0.2, 0.4, 0.6})
-		test("bool", cfg.Bool, true)
-		test("bools", cfg.Bools, []bool{true, false})
-		test("string", cfg.String, "foo")
-		test("strings", cfg.Strings, []string{"foo", "bar", "baz"})
-		test("duration", cfg.Duration, time.Second)
-		test("durations", cfg.Durations, []time.Duration{time.Second, time.Minute, time.Hour})
-		test("unmarshaler", cfg.IP, net.IPv4zero)
-		test("unmarshalers", cfg.IPs, []net.IP{net.IPv4zero, net.IPv4bcast})
+		assert.Equal[E](t, cfg.Int, -1)
+		assert.Equal[E](t, cfg.Ints, []int{-1, 0})
+		assert.Equal[E](t, cfg.Int8, -8)
+		assert.Equal[E](t, cfg.Int8s, []int8{-8, 0})
+		assert.Equal[E](t, cfg.Int16, -16)
+		assert.Equal[E](t, cfg.Int16s, []int16{-16, 0})
+		assert.Equal[E](t, cfg.Int32, -32)
+		assert.Equal[E](t, cfg.Int32s, []int32{-32, 0})
+		assert.Equal[E](t, cfg.Int64, -64)
+		assert.Equal[E](t, cfg.Int64s, []int64{-64, 0})
+		assert.Equal[E](t, cfg.Uint, 1)
+		assert.Equal[E](t, cfg.Uints, []uint{0, 1})
+		assert.Equal[E](t, cfg.Uint8, 8)
+		assert.Equal[E](t, cfg.Uint8s, []uint8{0, 8})
+		assert.Equal[E](t, cfg.Uint16, 16)
+		assert.Equal[E](t, cfg.Uint16s, []uint16{0, 16})
+		assert.Equal[E](t, cfg.Uint32, 32)
+		assert.Equal[E](t, cfg.Uint32s, []uint32{0, 32})
+		assert.Equal[E](t, cfg.Uint64, 64)
+		assert.Equal[E](t, cfg.Uint64s, []uint64{0, 64})
+		assert.Equal[E](t, cfg.Float32, 0.32)
+		assert.Equal[E](t, cfg.Float32s, []float32{0.32, 0.64})
+		assert.Equal[E](t, cfg.Float64, 0.64)
+		assert.Equal[E](t, cfg.Float64s, []float64{0.64, 0.32})
+		assert.Equal[E](t, cfg.Bool, true)
+		assert.Equal[E](t, cfg.Bools, []bool{true, false})
+		assert.Equal[E](t, cfg.String, "foo")
+		assert.Equal[E](t, cfg.Strings, []string{"foo", "bar"})
+		assert.Equal[E](t, cfg.Duration, time.Second)
+		assert.Equal[E](t, cfg.Durations, []time.Duration{time.Second, time.Minute})
+		assert.Equal[E](t, cfg.IP, net.IPv4zero)
+		assert.Equal[E](t, cfg.IPs, []net.IP{net.IPv4zero, net.IPv4bcast})
 	})
 
 	t.Run("parsing errors", func(t *testing.T) {
-		test := func(name, envName string, checkErr func(error) bool) {
-			t.Run(name, func(t *testing.T) {
-				// "-" is an invalid value for all the following types,
-				// it causes an error for strconv.Parse*, time.ParseDuration and net.ParseIP.
-				m := env.Map{envName: "-"}
+		tests := map[string]struct {
+			src      env.Source
+			checkErr func(error)
+		}{
+			"invalid int": {
+				src:      env.Map{"INT": "-"},
+				checkErr: func(err error) { assert.IsErr[E](t, err, strconv.ErrSyntax) },
+			},
+			"invalid uint": {
+				src:      env.Map{"UINT": "-"},
+				checkErr: func(err error) { assert.IsErr[E](t, err, strconv.ErrSyntax) },
+			},
+			"invalid float64": {
+				src:      env.Map{"FLOAT64": "-"},
+				checkErr: func(err error) { assert.IsErr[E](t, err, strconv.ErrSyntax) },
+			},
+			"invalid bool": {
+				src:      env.Map{"BOOL": "-"},
+				checkErr: func(err error) { assert.IsErr[E](t, err, strconv.ErrSyntax) },
+			},
+			"invalid time.Duration": {
+				src:      env.Map{"DURATION": "-"},
+				checkErr: func(err error) { assert.Equal[E](t, errors.Unwrap(err).Error(), `time: invalid duration "-"`) },
+			},
+			"invalid encoding.TextUnmarshaler": {
+				src:      env.Map{"IP": "-"},
+				checkErr: func(err error) { assert.AsErr[E](t, err, new(*net.ParseError)) },
+			},
+			"invalid slice": {
+				src:      env.Map{"IPS": "-"},
+				checkErr: func(err error) { assert.AsErr[E](t, err, new(*net.ParseError)) },
+			},
+		}
 
+		for name, test := range tests {
+			t.Run(name, func(t *testing.T) {
 				var cfg struct {
-					Int         int           `env:"INT"`
-					Uint        uint          `env:"UINT"`
-					Float       float64       `env:"FLOAT"`
-					Bool        bool          `env:"BOOL"`
-					Duration    time.Duration `env:"DURATION"`
-					Unmarshaler net.IP        `env:"UNMARSHALER"`
-					Slice       []net.IP      `env:"SLICE"`
+					Int      int           `env:"INT"`
+					Uint     uint          `env:"UINT"`
+					Float64  float64       `env:"FLOAT64"`
+					Bool     bool          `env:"BOOL"`
+					Duration time.Duration `env:"DURATION"`
+					IP       net.IP        `env:"IP"`
+					IPs      []net.IP      `env:"IPS"`
 				}
-				err := env.Load(&cfg, env.WithSource(m))
-				assert.Equal[E](t, checkErr(err), true)
+				err := env.Load(&cfg, env.WithSource(test.src))
+				test.checkErr(err)
 			})
 		}
-
-		isErrSyntax := func(err error) bool {
-			return errors.Is(err, strconv.ErrSyntax)
-		}
-		isInvalidDuration := func(err error) bool {
-			return errors.Unwrap(err).Error() == `time: invalid duration "-"`
-		}
-		asParseError := func(err error) bool {
-			return errors.As(err, new(*net.ParseError))
-		}
-
-		test("invalid int", "INT", isErrSyntax)
-		test("invalid uint", "UINT", isErrSyntax)
-		test("invalid float", "FLOAT", isErrSyntax)
-		test("invalid bool", "BOOL", isErrSyntax)
-		test("invalid duration", "DURATION", isInvalidDuration)
-		test("invalid unmarshaler", "UNMARSHALER", asParseError)
-		test("invalid slice", "SLICE", asParseError)
 	})
 }
