@@ -10,11 +10,11 @@ import (
 )
 
 func TestUsage(t *testing.T) {
-	t.Run("default empty string", func(t *testing.T) {
-		var cfg struct {
-			Foo string `env:"FOO"`
-		}
+	t.Run("empty string as default", func(t *testing.T) {
 		var buf bytes.Buffer
+		var cfg struct {
+			Foo string `env:"FOO" default:""`
+		}
 		env.Usage(&cfg, &buf)
 		assert.Equal[E](t, buf.String(), "Usage:\n  FOO  string  default <empty>\n")
 	})

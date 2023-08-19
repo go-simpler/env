@@ -37,9 +37,9 @@ func TestMap_LookupEnv(t *testing.T) {
 
 func testSource(t *testing.T, src env.Source) {
 	var cfg struct {
-		Foo int `env:"FOO,required"`
-		Bar int `env:"BAR,required"`
-		Baz int `env:"BAZ,required"`
+		Foo int `env:"FOO"`
+		Bar int `env:"BAR"`
+		Baz int `env:"BAZ"`
 	}
 	err := env.Load(&cfg, env.WithSource(src))
 	assert.NoErr[F](t, err)
