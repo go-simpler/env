@@ -21,14 +21,7 @@ type Var struct {
 }
 
 // Usage writes a usage message to the given [io.Writer], documenting all defined environment variables.
-func Usage(cfg any, w io.Writer) {
-	v := reflect.ValueOf(cfg)
-	if !structPtr(v) {
-		panic("env: cfg must be a non-nil struct pointer")
-	}
-
-	vars := newLoader(nil).parseVars(v.Elem())
-
+func Usage(vars []Var, w io.Writer) {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	defer tw.Flush()
 

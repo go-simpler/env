@@ -2,7 +2,6 @@ package env_test
 
 import (
 	"errors"
-	"io"
 	"net"
 	"strconv"
 	"testing"
@@ -26,13 +25,8 @@ func TestLoad(t *testing.T) {
 
 		for name, cfg := range tests {
 			t.Run(name, func(t *testing.T) {
-				const panicMsg = "env: cfg must be a non-nil struct pointer"
-
-				load := func() { _ = env.Load(cfg, env.WithSource(env.Map{})) }
-				assert.Panics[E](t, load, panicMsg)
-
-				usage := func() { env.Usage(cfg, io.Discard) }
-				assert.Panics[E](t, usage, panicMsg)
+				load := func() { _, _ = env.Load(cfg, env.WithSource(env.Map{})) }
+				assert.Panics[E](t, load, "env: cfg must be a non-nil struct pointer")
 			})
 		}
 	})
@@ -41,7 +35,7 @@ func TestLoad(t *testing.T) {
 		var cfg struct {
 			Foo int `env:""`
 		}
-		load := func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) }
+		load := func() { _, _ = env.Load(&cfg, env.WithSource(env.Map{})) }
 		assert.Panics[E](t, load, "env: empty tag name is not allowed")
 	})
 
@@ -49,7 +43,7 @@ func TestLoad(t *testing.T) {
 		var cfg struct {
 			Foo int `env:"FOO,?"`
 		}
-		load := func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) }
+		load := func() { _, _ = env.Load(&cfg, env.WithSource(env.Map{})) }
 		assert.Panics[E](t, load, "env: invalid tag option `?`")
 	})
 
@@ -57,7 +51,7 @@ func TestLoad(t *testing.T) {
 		var cfg struct {
 			Foo int `env:"FOO,required" default:"1"`
 		}
-		load := func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) }
+		load := func() { _, _ = env.Load(&cfg, env.WithSource(env.Map{})) }
 		assert.Panics[E](t, load, "env: `required` and `default` can't be used simultaneously")
 	})
 
@@ -67,7 +61,7 @@ func TestLoad(t *testing.T) {
 		var cfg struct {
 			Foo complex64 `env:"FOO"`
 		}
-		load := func() { _ = env.Load(&cfg, env.WithSource(m)) }
+		load := func() { _, _ = env.Load(&cfg, env.WithSource(m)) }
 		assert.Panics[E](t, load, "env: unsupported type `complex64`")
 	})
 
@@ -78,7 +72,7 @@ func TestLoad(t *testing.T) {
 			foo int `env:"FOO"`
 			Bar int
 		}
-		err := env.Load(&cfg, env.WithSource(m))
+		_, err := env.Load(&cfg, env.WithSource(m))
 		assert.NoErr[F](t, err)
 		assert.Equal[E](t, cfg.foo, 0)
 		assert.Equal[E](t, cfg.Bar, 0)
@@ -94,7 +88,7 @@ func TestLoad(t *testing.T) {
 			Bar int `env:"BAR"`
 			Baz int `env:"BAZ"`
 		}
-		err := env.Load(&cfg, env.WithSource(m1, m2, m3))
+		_, err := env.Load(&cfg, env.WithSource(m1, m2, m3))
 		assert.NoErr[F](t, err)
 		assert.Equal[E](t, cfg.Foo, 2)
 		assert.Equal[E](t, cfg.Bar, 3)
@@ -155,7 +149,7 @@ func TestLoad(t *testing.T) {
 			IP        net.IP          `env:"IP"`
 			IPs       []net.IP        `env:"IPS"`
 		}
-		err := env.Load(&cfg, env.WithSource(m))
+		_, err := env.Load(&cfg, env.WithSource(m))
 		assert.NoErr[F](t, err)
 		assert.Equal[E](t, cfg.Int, -1)
 		assert.Equal[E](t, cfg.Ints, []int{-1, 0})
@@ -237,7 +231,7 @@ func TestLoad(t *testing.T) {
 					IP       net.IP        `env:"IP"`
 					IPs      []net.IP      `env:"IPS"`
 				}
-				err := env.Load(&cfg, env.WithSource(test.src))
+				_, err := env.Load(&cfg, env.WithSource(test.src))
 				test.checkErr(err)
 			})
 		}

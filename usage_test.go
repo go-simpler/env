@@ -11,11 +11,14 @@ import (
 
 func TestUsage(t *testing.T) {
 	t.Run("empty string as default", func(t *testing.T) {
-		var buf bytes.Buffer
 		var cfg struct {
 			Foo string `env:"FOO" default:""`
 		}
-		env.Usage(&cfg, &buf)
+		vars, err := env.Load(&cfg, env.WithSource(env.Map{}))
+		assert.NoErr[F](t, err)
+
+		var buf bytes.Buffer
+		env.Usage(vars, &buf)
 		assert.Equal[E](t, buf.String(), "Usage:\n  FOO  string  default <empty>\n")
 	})
 }

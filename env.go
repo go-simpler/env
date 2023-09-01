@@ -44,7 +44,7 @@ import (
 // # Global options
 //
 // Load also accepts global options that apply to all environment variables, see the With* functions for details.
-func Load(cfg any, opts ...Option) error {
+func Load(cfg any, opts ...Option) ([]Var, error) {
 	return newLoader(opts).loadVars(cfg)
 }
 
@@ -104,7 +104,7 @@ func newLoader(opts []Option) *loader {
 	return &l
 }
 
-func (l *loader) loadVars(cfg any) error {
+func (l *loader) loadVars(cfg any) ([]Var, error) {
 	v := reflect.ValueOf(cfg)
 	if !structPtr(v) {
 		panic("env: cfg must be a non-nil struct pointer")
@@ -135,15 +135,15 @@ func (l *loader) loadVars(cfg any) error {
 			err = setValue(v.structField, value)
 		}
 		if err != nil {
-			return err
+			return vars, err
 		}
 	}
 
 	if len(notset) > 0 {
-		return &NotSetError{Names: notset}
+		return vars, &NotSetError{Names: notset}
 	}
 
-	return nil
+	return vars, nil
 }
 
 func (l *loader) parseVars(v reflect.Value) []Var {

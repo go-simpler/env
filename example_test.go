@@ -14,7 +14,7 @@ func ExampleLoad() {
 	var cfg struct {
 		Port int `env:"PORT"`
 	}
-	if err := env.Load(&cfg); err != nil {
+	if _, err := env.Load(&cfg); err != nil {
 		fmt.Println(err)
 	}
 
@@ -28,7 +28,7 @@ func ExampleLoad_defaultValue() {
 	var cfg struct {
 		Port int `env:"PORT" default:"8080"`
 	}
-	if err := env.Load(&cfg); err != nil {
+	if _, err := env.Load(&cfg); err != nil {
 		fmt.Println(err)
 	}
 
@@ -44,7 +44,7 @@ func ExampleLoad_nestedStruct() {
 			Port int `env:"HTTP_PORT"`
 		}
 	}
-	if err := env.Load(&cfg); err != nil {
+	if _, err := env.Load(&cfg); err != nil {
 		fmt.Println(err)
 	}
 
@@ -60,7 +60,7 @@ func ExampleLoad_required() {
 		Host string `env:"HOST,required"`
 		Port int    `env:"PORT,required"`
 	}
-	if err := env.Load(&cfg); err != nil {
+	if _, err := env.Load(&cfg); err != nil {
 		var notSetErr *env.NotSetError
 		if errors.As(err, &notSetErr) {
 			fmt.Println(notSetErr.Names)
@@ -77,7 +77,7 @@ func ExampleLoad_expand() {
 	var cfg struct {
 		Addr string `env:"ADDR,expand"`
 	}
-	if err := env.Load(&cfg); err != nil {
+	if _, err := env.Load(&cfg); err != nil {
 		fmt.Println(err)
 	}
 
@@ -91,7 +91,7 @@ func ExampleWithSource() {
 	var cfg struct {
 		Port int `env:"PORT"`
 	}
-	if err := env.Load(&cfg, env.WithSource(m)); err != nil {
+	if _, err := env.Load(&cfg, env.WithSource(m)); err != nil {
 		fmt.Println(err)
 	}
 
@@ -109,7 +109,7 @@ func ExampleWithSource_multiple() {
 		Host string `env:"HOST"`
 		Port int    `env:"PORT"`
 	}
-	if err := env.Load(&cfg, env.WithSource(m, env.OS)); err != nil {
+	if _, err := env.Load(&cfg, env.WithSource(m, env.OS)); err != nil {
 		fmt.Println(err)
 	}
 
@@ -123,7 +123,7 @@ func ExampleWithPrefix() {
 	var cfg struct {
 		Port int `env:"PORT"`
 	}
-	if err := env.Load(&cfg, env.WithPrefix("APP_")); err != nil {
+	if _, err := env.Load(&cfg, env.WithPrefix("APP_")); err != nil {
 		fmt.Println(err)
 	}
 
@@ -137,7 +137,7 @@ func ExampleWithSliceSeparator() {
 	var cfg struct {
 		Ports []int `env:"PORTS"`
 	}
-	if err := env.Load(&cfg, env.WithSliceSeparator(";")); err != nil {
+	if _, err := env.Load(&cfg, env.WithSliceSeparator(";")); err != nil {
 		fmt.Println(err)
 	}
 
@@ -156,9 +156,9 @@ func ExampleUsage() {
 		}
 		HTTPPort int `env:"HTTP_PORT" default:"8080" desc:"http server port"`
 	}
-	if err := env.Load(&cfg); err != nil {
+	if vars, err := env.Load(&cfg); err != nil {
 		fmt.Println(err)
-		env.Usage(&cfg, os.Stdout)
+		env.Usage(vars, os.Stdout)
 	}
 
 	// Output: env: [DB_HOST DB_PORT] are required but not set
