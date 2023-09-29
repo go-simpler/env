@@ -5,7 +5,7 @@ import (
 
 	"go-simpler.org/env"
 	"go-simpler.org/env/internal/assert"
-	. "go-simpler.org/env/internal/assert/dotimport"
+	. "go-simpler.org/env/internal/assert/EF"
 )
 
 func TestSourceFunc_LookupEnv(t *testing.T) {

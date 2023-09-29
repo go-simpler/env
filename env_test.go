@@ -10,10 +10,10 @@ import (
 
 	"go-simpler.org/env"
 	"go-simpler.org/env/internal/assert"
-	. "go-simpler.org/env/internal/assert/dotimport"
+	. "go-simpler.org/env/internal/assert/EF"
 )
 
-//go:generate go run -tags=copier go-simpler.org/assert/cmd/copier@v0.6.0 internal
+//go:generate go run -tags=copier go-simpler.org/assert/cmd/copier@v0.7.0 -dir=internal
 
 func TestLoad(t *testing.T) {
 	t.Run("invalid argument", func(t *testing.T) {
