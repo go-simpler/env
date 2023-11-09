@@ -25,14 +25,3 @@ func (m Map) LookupEnv(key string) (string, bool) {
 	value, ok := m[key]
 	return value, ok
 }
-
-type multiSource []Source
-
-func (ms multiSource) LookupEnv(key string) (string, bool) {
-	for _, src := range ms {
-		if value, ok := src.LookupEnv(key); ok {
-			return value, true
-		}
-	}
-	return "", false
-}
