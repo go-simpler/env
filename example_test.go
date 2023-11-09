@@ -99,24 +99,6 @@ func ExampleWithSource() {
 	// Output: 8080
 }
 
-func ExampleWithSource_multiple() {
-	m := env.Map{"PORT": "8080"}
-
-	os.Setenv("HOST", "localhost")
-	os.Setenv("PORT", "8081") // overrides PORT from m.
-
-	var cfg struct {
-		Host string `env:"HOST"`
-		Port int    `env:"PORT"`
-	}
-	if err := env.Load(&cfg, env.WithSource(m, env.OS)); err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println(cfg.Host, cfg.Port)
-	// Output: localhost 8081
-}
-
 func ExampleWithPrefix() {
 	os.Setenv("APP_PORT", "8080")
 

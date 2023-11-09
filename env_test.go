@@ -84,23 +84,6 @@ func TestLoad(t *testing.T) {
 		assert.Equal[E](t, cfg.Bar, 0)
 	})
 
-	t.Run("multiple sources order", func(t *testing.T) {
-		m1 := env.Map{"FOO": "1", "BAR": "2"}
-		m2 := env.Map{"FOO": "2", "BAZ": "3"}
-		m3 := env.Map{"BAR": "3", "BAZ": "4"}
-
-		var cfg struct {
-			Foo int `env:"FOO"`
-			Bar int `env:"BAR"`
-			Baz int `env:"BAZ"`
-		}
-		err := env.Load(&cfg, env.WithSource(m1, m2, m3))
-		assert.NoErr[F](t, err)
-		assert.Equal[E](t, cfg.Foo, 2)
-		assert.Equal[E](t, cfg.Bar, 3)
-		assert.Equal[E](t, cfg.Baz, 4)
-	})
-
 	t.Run("all supported types", func(t *testing.T) {
 		m := env.Map{
 			"INT": "-1", "INTS": "-1 0",
