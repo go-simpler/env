@@ -57,12 +57,6 @@ func WithSource(src Source) Option {
 	return func(l *loader) { l.source = src }
 }
 
-// WithPrefix configures [Load] to automatically add the provided prefix to each environment variable.
-// By default, no prefix is configured.
-func WithPrefix(prefix string) Option {
-	return func(l *loader) { l.prefix = prefix }
-}
-
 // WithSliceSeparator configures [Load] to use the provided separator when parsing slice values.
 // The default separator is space.
 func WithSliceSeparator(sep string) Option {
@@ -82,14 +76,12 @@ func (e *NotSetError) Error() string {
 
 type loader struct {
 	source   Source
-	prefix   string
 	sliceSep string
 }
 
 func newLoader(opts []Option) *loader {
 	l := loader{
 		source:   OS,
-		prefix:   "",
 		sliceSep: " ",
 	}
 	for _, opt := range opts {
@@ -189,7 +181,7 @@ func (l *loader) parseVars(v reflect.Value) []Var {
 		}
 
 		vars = append(vars, Var{
-			Name:          l.prefix + name,
+			Name:          name,
 			Type:          field.Type(),
 			Desc:          sf.Tag.Get("desc"),
 			Default:       defValue,

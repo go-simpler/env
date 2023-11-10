@@ -9,7 +9,7 @@ import (
 
 // Var contains the information about the environment variable parsed from a struct field.
 type Var struct {
-	Name     string       // The full name of the variable, including the prefix.
+	Name     string       // The full name of the variable.
 	Type     reflect.Type // The type of the variable.
 	Desc     string       // The description parsed from the `desc` tag (if exists).
 	Default  string       // The default value of the variable. Empty, if the variable is required.

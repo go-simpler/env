@@ -99,20 +99,6 @@ func ExampleWithSource() {
 	// Output: 8080
 }
 
-func ExampleWithPrefix() {
-	os.Setenv("APP_PORT", "8080")
-
-	var cfg struct {
-		Port int `env:"PORT"`
-	}
-	if err := env.Load(&cfg, env.WithPrefix("APP_")); err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println(cfg.Port)
-	// Output: 8080
-}
-
 func ExampleWithSliceSeparator() {
 	os.Setenv("PORTS", "8080;8081;8082")
 

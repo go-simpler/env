@@ -30,7 +30,7 @@ go get go-simpler.org/env
 * Simple API
 * Dependency-free
 * Per-variable options: [required](#required), [expand](#expand)
-* Global options: [source](#source), [prefix](#prefix), [slice separator](#slice-separator)
+* Global options: [source](#source), [slice separator](#slice-separator)
 * Auto-generated [usage message](#usage-message)
 
 ## 📋 Usage
@@ -178,25 +178,6 @@ var cfg struct {
     Port int `env:"PORT"`
 }
 if err := env.Load(&cfg, env.WithSource(m)); err != nil {
-    fmt.Println(err)
-}
-
-fmt.Println(cfg.Port)
-// Output: 8080
-```
-
-#### Prefix
-
-It is a common practice to prefix app's environment variables with some string
-(e.g., its name). Such a prefix can be set using the `WithPrefix` option:
-
-```go
-os.Setenv("APP_PORT", "8080")
-
-var cfg struct {
-    Port int `env:"PORT"`
-}
-if err := env.Load(&cfg, env.WithPrefix("APP_")); err != nil {
     fmt.Println(err)
 }
 
