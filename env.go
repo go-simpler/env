@@ -158,7 +158,7 @@ func parseVars(v reflect.Value) []Var {
 		vars = append(vars, Var{
 			Name:          name,
 			Type:          field.Type(),
-			Desc:          sf.Tag.Get("desc"),
+			Usage:         sf.Tag.Get("usage"),
 			Default:       defValue,
 			Required:      required,
 			Expand:        expand,
