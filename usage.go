@@ -7,11 +7,11 @@ import (
 	"text/tabwriter"
 )
 
-// Var contains the information about the environment variable parsed from a struct field.
+// Var holds the information about an environment variable parsed from the struct field.
 type Var struct {
-	Name     string       // The full name of the variable.
+	Name     string       // The name of the variable.
 	Type     reflect.Type // The type of the variable.
-	Desc     string       // The description parsed from the `desc` tag (if exists).
+	Usage    string       // The usage string parsed from the `usage` tag (if exists).
 	Default  string       // The default value of the variable. Empty, if the variable is required.
 	Required bool         // True, if the variable is marked as required.
 	Expand   bool         // True, if the variable is marked to be expanded with [os.Expand].
@@ -20,7 +20,7 @@ type Var struct {
 	hasDefaultTag bool
 }
 
-// Usage writes a usage message to the given [io.Writer], documenting all defined environment variables.
+// Usage writes a usage message documenting all defined environment variables to the given [io.Writer].
 func Usage(cfg any, w io.Writer) {
 	v := reflect.ValueOf(cfg)
 	if !structPtr(v) {
@@ -43,8 +43,8 @@ func Usage(cfg any, w io.Writer) {
 			}
 			fmt.Fprintf(tw, "\tdefault %s", v.Default)
 		}
-		if v.Desc != "" {
-			fmt.Fprintf(tw, "\t%s", v.Desc)
+		if v.Usage != "" {
+			fmt.Fprintf(tw, "\t%s", v.Usage)
 		}
 		fmt.Fprintf(tw, "\n")
 	}

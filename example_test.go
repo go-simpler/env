@@ -119,10 +119,10 @@ func ExampleUsage() {
 
 	var cfg struct {
 		DB struct {
-			Host string `env:"DB_HOST,required" desc:"database host"`
-			Port int    `env:"DB_PORT,required" desc:"database port"`
+			Host string `env:"DB_HOST,required" usage:"database host"`
+			Port int    `env:"DB_PORT,required" usage:"database port"`
 		}
-		HTTPPort int `env:"HTTP_PORT" default:"8080" desc:"http server port"`
+		HTTPPort int `env:"HTTP_PORT" default:"8080" usage:"http server port"`
 	}
 	if err := env.Load(&cfg, nil); err != nil {
 		fmt.Println(err)
