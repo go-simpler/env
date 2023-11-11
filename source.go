@@ -8,16 +8,10 @@ type Source interface {
 	LookupEnv(key string) (value string, ok bool)
 }
 
-// SourceFunc is an adapter that allows using a function as a [Source].
-type SourceFunc func(key string) (value string, ok bool)
-
-// LookupEnv implements the [Source] interface.
-func (fn SourceFunc) LookupEnv(key string) (string, bool) { return fn(key) }
-
 // OS is the main [Source] that uses [os.LookupEnv].
-var OS Source = SourceFunc(os.LookupEnv)
+var OS Source = sourceFunc(os.LookupEnv)
 
-// Map is an in-memory [Source] implementation useful in tests.
+// Map is a [Source] implementation useful in tests.
 type Map map[string]string
 
 // LookupEnv implements the [Source] interface.
@@ -25,3 +19,7 @@ func (m Map) LookupEnv(key string) (string, bool) {
 	value, ok := m[key]
 	return value, ok
 }
+
+type sourceFunc func(key string) (string, bool)
+
+func (fn sourceFunc) LookupEnv(key string) (string, bool) { return fn(key) }
