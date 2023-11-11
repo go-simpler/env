@@ -41,7 +41,7 @@ func testSource(t *testing.T, src env.Source) {
 		Bar int `env:"BAR"`
 		Baz int `env:"BAZ"`
 	}
-	err := env.Load(&cfg, env.WithSource(src))
+	err := env.Load(&cfg, &env.Options{Source: src})
 	assert.NoErr[F](t, err)
 	assert.Equal[E](t, cfg.Foo, 1)
 	assert.Equal[E](t, cfg.Bar, 2)

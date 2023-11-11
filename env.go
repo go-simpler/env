@@ -8,6 +8,23 @@ import (
 	"strings"
 )
 
+// Options are options for the [Load] function.
+type Options struct {
+	Source   Source // The source of environment variables. The default is [OS].
+	SliceSep string // The separator used to parse slice values. The default is space.
+}
+
+// NotSetError is returned when environment variables are marked as required but not set.
+type NotSetError struct {
+	// The names of the missing required environment variables.
+	Names []string
+}
+
+// Error implements the error interface.
+func (e *NotSetError) Error() string {
+	return fmt.Sprintf("env: %v are required but not set", e.Names)
+}
+
 // Load loads environment variables into the provided struct using the [OS] [Source].
 // cfg must be a non-nil struct pointer, otherwise Load panics.
 //
@@ -40,69 +57,27 @@ import (
 //   - expand: expands the value of the environment variable using [os.Expand]
 //
 // If environment variables are marked as required but not set, an error of type [NotSetError] will be returned.
-//
-// # Global options
-//
-// Load also accepts global options that apply to all environment variables, see the With* functions for details.
-func Load(cfg any, opts ...Option) error {
-	return newLoader(opts).loadVars(cfg)
-}
-
-// Option allows to configure the behaviour of the [Load] function.
-type Option func(*loader)
-
-// WithSource configures [Load] to retrieve environment variables from the provided [Source].
-// The default source is [OS].
-func WithSource(src Source) Option {
-	return func(l *loader) { l.source = src }
-}
-
-// WithSliceSeparator configures [Load] to use the provided separator when parsing slice values.
-// The default separator is space.
-func WithSliceSeparator(sep string) Option {
-	return func(l *loader) { l.sliceSep = sep }
-}
-
-// NotSetError is returned when environment variables are marked as required but not set.
-type NotSetError struct {
-	// Names is a slice of the names of the missing required environment variables.
-	Names []string
-}
-
-// Error implements the error interface.
-func (e *NotSetError) Error() string {
-	return fmt.Sprintf("env: %v are required but not set", e.Names)
-}
-
-type loader struct {
-	source   Source
-	sliceSep string
-}
-
-func newLoader(opts []Option) *loader {
-	l := loader{
-		source:   OS,
-		sliceSep: " ",
+func Load(cfg any, opts *Options) error {
+	if opts == nil {
+		opts = new(Options)
 	}
-	for _, opt := range opts {
-		opt(&l)
+	if opts.Source == nil {
+		opts.Source = OS
 	}
-	return &l
-}
+	if opts.SliceSep == "" {
+		opts.SliceSep = " "
+	}
 
-func (l *loader) loadVars(cfg any) error {
 	v := reflect.ValueOf(cfg)
 	if !structPtr(v) {
 		panic("env: cfg must be a non-nil struct pointer")
 	}
 
-	vars := l.parseVars(v.Elem())
+	vars := parseVars(v.Elem())
 
-	// accumulate missing required variables to return NotSetError after the loop is finished.
 	var notset []string
-
 	for _, v := range vars {
-		value, ok := l.lookupEnv(v.Name, v.Expand)
+		value, ok := lookupEnv(opts.Source, v.Name, v.Expand)
 		if !ok {
 			if v.Required {
 				notset = append(notset, v.Name)
@@ -116,7 +91,7 @@ func (l *loader) loadVars(cfg any) error {
 
 		var err error
 		if kindOf(v.structField, reflect.Slice) && !implements(v.structField, unmarshalerIface) {
-			err = setSlice(v.structField, strings.Split(value, l.sliceSep))
+			err = setSlice(v.structField, strings.Split(value, opts.SliceSep))
 		} else {
 			err = setValue(v.structField, value)
 		}
@@ -132,7 +107,7 @@ func (l *loader) loadVars(cfg any) error {
 	return nil
 }
 
-func (l *loader) parseVars(v reflect.Value) []Var {
+func parseVars(v reflect.Value) []Var {
 	var vars []Var
 
 	for i := 0; i < v.NumField(); i++ {
@@ -143,7 +118,7 @@ func (l *loader) parseVars(v reflect.Value) []Var {
 
 		// special case: a nested struct, parse its fields recursively.
 		if kindOf(field, reflect.Struct) && !implements(field, unmarshalerIface) {
-			nested := l.parseVars(field)
+			nested := parseVars(field)
 			vars = append(vars, nested...)
 			continue
 		}
@@ -195,20 +170,17 @@ func (l *loader) parseVars(v reflect.Value) []Var {
 	return vars
 }
 
-func (l *loader) lookupEnv(key string, expand bool) (string, bool) {
-	value, ok := l.source.LookupEnv(key)
+func lookupEnv(src Source, key string, expand bool) (string, bool) {
+	value, ok := src.LookupEnv(key)
 	if !ok {
 		return "", false
 	}
-
 	if !expand {
 		return value, true
 	}
-
 	mapping := func(key string) string {
-		v, _ := l.source.LookupEnv(key)
+		v, _ := src.LookupEnv(key)
 		return v
 	}
-
 	return os.Expand(value, mapping), true
 }

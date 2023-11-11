@@ -28,7 +28,7 @@ func TestLoad(t *testing.T) {
 			t.Run(name, func(t *testing.T) {
 				const panicMsg = "env: cfg must be a non-nil struct pointer"
 
-				load := func() { _ = env.Load(cfg, env.WithSource(env.Map{})) }
+				load := func() { _ = env.Load(cfg, &env.Options{Source: env.Map{}}) }
 				assert.Panics[E](t, load, panicMsg)
 
 				usage := func() { env.Usage(cfg, io.Discard) }
@@ -41,7 +41,7 @@ func TestLoad(t *testing.T) {
 		var cfg struct {
 			Foo int `env:""`
 		}
-		load := func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) }
+		load := func() { _ = env.Load(&cfg, &env.Options{Source: env.Map{}}) }
 		assert.Panics[E](t, load, "env: empty tag name is not allowed")
 	})
 
@@ -49,7 +49,7 @@ func TestLoad(t *testing.T) {
 		var cfg struct {
 			Foo int `env:"FOO,?"`
 		}
-		load := func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) }
+		load := func() { _ = env.Load(&cfg, &env.Options{Source: env.Map{}}) }
 		assert.Panics[E](t, load, "env: invalid tag option `?`")
 	})
 
@@ -57,7 +57,7 @@ func TestLoad(t *testing.T) {
 		var cfg struct {
 			Foo int `env:"FOO,required" default:"1"`
 		}
-		load := func() { _ = env.Load(&cfg, env.WithSource(env.Map{})) }
+		load := func() { _ = env.Load(&cfg, &env.Options{Source: env.Map{}}) }
 		assert.Panics[E](t, load, "env: `required` and `default` can't be used simultaneously")
 	})
 
@@ -67,7 +67,7 @@ func TestLoad(t *testing.T) {
 		var cfg struct {
 			Foo complex64 `env:"FOO"`
 		}
-		load := func() { _ = env.Load(&cfg, env.WithSource(m)) }
+		load := func() { _ = env.Load(&cfg, &env.Options{Source: m}) }
 		assert.Panics[E](t, load, "env: unsupported type `complex64`")
 	})
 
@@ -78,7 +78,7 @@ func TestLoad(t *testing.T) {
 			foo int `env:"FOO"`
 			Bar int
 		}
-		err := env.Load(&cfg, env.WithSource(m))
+		err := env.Load(&cfg, &env.Options{Source: m})
 		assert.NoErr[F](t, err)
 		assert.Equal[E](t, cfg.foo, 0)
 		assert.Equal[E](t, cfg.Bar, 0)
@@ -138,7 +138,7 @@ func TestLoad(t *testing.T) {
 			IP        net.IP          `env:"IP"`
 			IPs       []net.IP        `env:"IPS"`
 		}
-		err := env.Load(&cfg, env.WithSource(m))
+		err := env.Load(&cfg, &env.Options{Source: m})
 		assert.NoErr[F](t, err)
 		assert.Equal[E](t, cfg.Int, -1)
 		assert.Equal[E](t, cfg.Ints, []int{-1, 0})
@@ -220,7 +220,7 @@ func TestLoad(t *testing.T) {
 					IP       net.IP        `env:"IP"`
 					IPs      []net.IP      `env:"IPS"`
 				}
-				err := env.Load(&cfg, env.WithSource(test.src))
+				err := env.Load(&cfg, &env.Options{Source: test.src})
 				test.checkErr(err)
 			})
 		}

@@ -27,7 +27,7 @@ func Usage(cfg any, w io.Writer) {
 		panic("env: cfg must be a non-nil struct pointer")
 	}
 
-	vars := newLoader(nil).parseVars(v.Elem())
+	vars := parseVars(v.Elem())
 
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	defer tw.Flush()
