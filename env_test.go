@@ -62,7 +62,7 @@ func TestLoad(t *testing.T) {
 	})
 
 	t.Run("unsupported type", func(t *testing.T) {
-		m := env.Map{"FOO": "1 + 2i"}
+		m := env.Map{"FOO": "1+2i"}
 
 		var cfg struct {
 			Foo complex64 `env:"FOO"`

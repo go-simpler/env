@@ -1,4 +1,4 @@
-// Package env provides an API for loading environment variables into structs.
+// Package env implements loading environment variables into a config struct.
 package env
 
 import (
@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// Options are options for the [Load] function.
+// Options are the options for the [Load] function.
 type Options struct {
 	Source   Source // The source of environment variables. The default is [OS].
 	SliceSep string // The separator used to parse slice values. The default is space.
@@ -16,47 +16,43 @@ type Options struct {
 
 // NotSetError is returned when environment variables are marked as required but not set.
 type NotSetError struct {
-	// The names of the missing required environment variables.
-	Names []string
+	Names []string // The names of the missing environment variables.
 }
 
 // Error implements the error interface.
 func (e *NotSetError) Error() string {
-	return fmt.Sprintf("env: %v are required but not set", e.Names)
+	if len(e.Names) == 1 {
+		return fmt.Sprintf("env: %s is required but not set", e.Names[0])
+	}
+	return fmt.Sprintf("env: %s are required but not set", strings.Join(e.Names, " "))
 }
 
-// Load loads environment variables into the provided struct using the [OS] [Source].
+// Load loads environment variables into the given struct.
 // cfg must be a non-nil struct pointer, otherwise Load panics.
+// If opts is nil, the default [Options] are used.
 //
-// The struct fields must have the `env:"VAR"` struct tag, where VAR is the name of the corresponding environment variable.
+// The struct fields must have the `env:"VAR"` struct tag,
+// where VAR is the name of the corresponding environment variable.
 // Unexported fields are ignored.
 //
-// # Supported types
-//
+// The following types are supported:
 //   - int (any kind)
 //   - float (any kind)
 //   - bool
 //   - string
 //   - [time.Duration]
 //   - [encoding.TextUnmarshaler]
-//   - slices of any type above (space is the default separator for values)
+//   - slices of any type above
+//   - nested structs of any depth
 //
-// See the [strconv].Parse* functions for parsing rules.
-// Implementing the [encoding.TextUnmarshaler] interface is enough to use any user-defined type.
-// Nested structs of any depth level are supported, only the leaves of the config tree must have the `env` tag.
+// See the [strconv].Parse* functions for the parsing rules.
+// User-defined types can be used by implementing the [encoding.TextUnmarshaler] interface.
 //
-// # Default values
+// Default values can be specified using the `default:"VALUE"` struct tag.
 //
-// Default values can be specified either using the `default` struct tag (has a higher priority) or by initializing the struct fields directly.
-//
-// # Per-variable options
-//
-// The name of the environment variable can be followed by comma-separated options in the form of `env:"VAR,option1,option2,..."`:
-//
+// The name of an environment variable can be followed by comma-separated options:
 //   - required: marks the environment variable as required
 //   - expand: expands the value of the environment variable using [os.Expand]
-//
-// If environment variables are marked as required but not set, an error of type [NotSetError] will be returned.
 func Load(cfg any, opts *Options) error {
 	if opts == nil {
 		opts = new(Options)
@@ -113,20 +109,19 @@ func parseVars(v reflect.Value) []Var {
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
 		if !field.CanSet() {
-			continue // skip unexported fields.
+			continue
 		}
 
 		// special case: a nested struct, parse its fields recursively.
 		if kindOf(field, reflect.Struct) && !implements(field, unmarshalerIface) {
-			nested := parseVars(field)
-			vars = append(vars, nested...)
+			vars = append(vars, parseVars(field)...)
 			continue
 		}
 
 		sf := v.Type().Field(i)
 		value, ok := sf.Tag.Lookup("env")
 		if !ok {
-			continue // skip fields without the `env` tag.
+			continue
 		}
 
 		parts := strings.Split(value, ",")
