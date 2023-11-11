@@ -8,9 +8,10 @@ import (
 	"strings"
 )
 
+// Options are options for the [Load] function.
 type Options struct {
-	Source   Source
-	SliceSep string
+	Source   Source // The source of environment variables. The default is [OS].
+	SliceSep string // The separator used to parse slice values. The default is space.
 }
 
 // NotSetError is returned when environment variables are marked as required but not set.
@@ -76,7 +77,7 @@ func Load(cfg any, opts *Options) error {
 
 	var notset []string
 	for _, v := range vars {
-		value, ok := lookupEnv(v.Name, v.Expand, opts.Source)
+		value, ok := lookupEnv(opts.Source, v.Name, v.Expand)
 		if !ok {
 			if v.Required {
 				notset = append(notset, v.Name)
@@ -169,20 +170,17 @@ func parseVars(v reflect.Value) []Var {
 	return vars
 }
 
-func lookupEnv(key string, expand bool, src Source) (string, bool) {
+func lookupEnv(src Source, key string, expand bool) (string, bool) {
 	value, ok := src.LookupEnv(key)
 	if !ok {
 		return "", false
 	}
-
 	if !expand {
 		return value, true
 	}
-
 	mapping := func(key string) string {
 		v, _ := src.LookupEnv(key)
 		return v
 	}
-
 	return os.Expand(value, mapping), true
 }
