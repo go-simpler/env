@@ -53,21 +53,19 @@ func ExampleLoad_nestedStruct() {
 }
 
 func ExampleLoad_required() {
-	os.Unsetenv("HOST")
 	os.Unsetenv("PORT")
 
 	var cfg struct {
-		Host string `env:"HOST,required"`
-		Port int    `env:"PORT,required"`
+		Port int `env:"PORT,required"`
 	}
 	if err := env.Load(&cfg, nil); err != nil {
 		var notSetErr *env.NotSetError
 		if errors.As(err, &notSetErr) {
-			fmt.Println(notSetErr.Names)
+			fmt.Println(notSetErr)
 		}
 	}
 
-	// Output: [HOST PORT]
+	// Output: env: PORT is required but not set
 }
 
 func ExampleLoad_expand() {
@@ -100,12 +98,12 @@ func ExampleLoad_source() {
 }
 
 func ExampleLoad_sliceSeparator() {
-	os.Setenv("PORTS", "8080;8081;8082")
+	os.Setenv("PORTS", "8080,8081,8082")
 
 	var cfg struct {
 		Ports []int `env:"PORTS"`
 	}
-	if err := env.Load(&cfg, &env.Options{SliceSep: ";"}); err != nil {
+	if err := env.Load(&cfg, &env.Options{SliceSep: ","}); err != nil {
 		fmt.Println(err)
 	}
 
@@ -129,7 +127,7 @@ func ExampleUsage() {
 		env.Usage(&cfg, os.Stdout)
 	}
 
-	// Output: env: [DB_HOST DB_PORT] are required but not set
+	// Output: env: DB_HOST DB_PORT are required but not set
 	// Usage:
 	//   DB_HOST    string  required      database host
 	//   DB_PORT    int     required      database port

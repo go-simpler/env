@@ -13,7 +13,6 @@ var (
 	unmarshalerIface = reflect.TypeOf(new(encoding.TextUnmarshaler)).Elem()
 )
 
-// typeOf reports whether v's type is one of the provided types.
 func typeOf(v reflect.Value, types ...reflect.Type) bool {
 	for _, t := range types {
 		if t == v.Type() {
@@ -23,7 +22,6 @@ func typeOf(v reflect.Value, types ...reflect.Type) bool {
 	return false
 }
 
-// kindOf reports whether v's kind is one of the provided kinds.
 func kindOf(v reflect.Value, kinds ...reflect.Kind) bool {
 	for _, k := range kinds {
 		if k == v.Kind() {
@@ -33,22 +31,19 @@ func kindOf(v reflect.Value, kinds ...reflect.Kind) bool {
 	return false
 }
 
-// implements reports whether v's type implements one of the provided interfaces.
 func implements(v reflect.Value, ifaces ...reflect.Type) bool {
 	for _, iface := range ifaces {
-		if t := v.Type(); t.Implements(iface) || reflect.PtrTo(v.Type()).Implements(iface) {
+		if t := v.Type(); t.Implements(iface) || reflect.PtrTo(t).Implements(iface) {
 			return true
 		}
 	}
 	return false
 }
 
-// structPtr reports whether v is a non-nil struct pointer.
 func structPtr(v reflect.Value) bool {
 	return v.IsValid() && v.Kind() == reflect.Ptr && v.Elem().Kind() == reflect.Struct && !v.IsNil()
 }
 
-// setValue parses s based on v's type/kind and sets v's underlying value to the result.
 func setValue(v reflect.Value, s string) error {
 	switch {
 	case typeOf(v, durationType):
@@ -71,8 +66,7 @@ func setValue(v reflect.Value, s string) error {
 }
 
 func setInt(v reflect.Value, s string) error {
-	bits := v.Type().Bits()
-	i, err := strconv.ParseInt(s, 10, bits)
+	i, err := strconv.ParseInt(s, 10, v.Type().Bits())
 	if err != nil {
 		return fmt.Errorf("parsing int: %w", err)
 	}
@@ -81,8 +75,7 @@ func setInt(v reflect.Value, s string) error {
 }
 
 func setUint(v reflect.Value, s string) error {
-	bits := v.Type().Bits()
-	u, err := strconv.ParseUint(s, 10, bits)
+	u, err := strconv.ParseUint(s, 10, v.Type().Bits())
 	if err != nil {
 		return fmt.Errorf("parsing uint: %w", err)
 	}
@@ -91,8 +84,7 @@ func setUint(v reflect.Value, s string) error {
 }
 
 func setFloat(v reflect.Value, s string) error {
-	bits := v.Type().Bits()
-	f, err := strconv.ParseFloat(s, bits)
+	f, err := strconv.ParseFloat(s, v.Type().Bits())
 	if err != nil {
 		return fmt.Errorf("parsing float: %w", err)
 	}
