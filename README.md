@@ -2,7 +2,7 @@
 
 ![logo](logo.svg)
 
-A lightweight package for loading environment variables into structs
+🔍 Load environment variables into a config struct
 
 [![awesome-go](https://awesome.re/badge.svg)](https://github.com/avelino/awesome-go#configuration)
 [![checks](https://github.com/go-simpler/env/actions/workflows/checks.yml/badge.svg)](https://github.com/go-simpler/env/actions/workflows/checks.yml)
@@ -15,9 +15,15 @@ A lightweight package for loading environment variables into structs
 ## 📌 About
 
 This package is made for apps that [store config in environment variables][1].
-Its purpose is to replace multiple fragmented `os.Getenv` calls in `main.go`
-with a single struct definition, which simplifies config management and improves
-code readability.
+Its purpose is to replace fragmented `os.Getenv` calls in `main.go` with a single struct definition,
+which simplifies config management and improves code readability.
+
+## 🚀 Features
+
+* Support for all common types and user-defined types
+* Options: [required](#required), [expand](#expand), [slice separator](#slice-separator)
+* Configurable [source](#source) of environment variables
+* Auto-generated [usage message](#usage-message)
 
 ## 📦 Install
 
@@ -25,21 +31,14 @@ code readability.
 go get go-simpler.org/env
 ```
 
-## 🚀 Features
-
-* Simple API
-* Dependency-free
-* Per-variable options: [required](#required), [expand](#expand)
-* Global options: [source](#source), [slice separator](#slice-separator)
-* Auto-generated [usage message](#usage-message)
-
 ## 📋 Usage
 
-`Load` is the main function of this package. It loads environment variables into
-the provided struct.
+`Load` is the main function of the package.
+It loads environment variables into the given struct.
 
-The struct fields must have the `env:"VAR"` struct tag, where `VAR` is the name
-of the corresponding environment variable. Unexported fields are ignored.
+The struct fields must have the `env:"VAR"` struct tag,
+where VAR is the name of the corresponding environment variable.
+Unexported fields are ignored.
 
 ```go
 os.Setenv("PORT", "8080")
@@ -47,12 +46,11 @@ os.Setenv("PORT", "8080")
 var cfg struct {
     Port int `env:"PORT"`
 }
-if err := env.Load(&cfg); err != nil {
+if err := env.Load(&cfg, nil); err != nil {
     fmt.Println(err)
 }
 
-fmt.Println(cfg.Port)
-// Output: 8080
+fmt.Println(cfg.Port) // 8080
 ```
 
 ### Supported types
@@ -64,31 +62,14 @@ fmt.Println(cfg.Port)
 * `time.Duration`
 * `encoding.TextUnmarshaler`
 * slices of any type above
+* nested structs of any depth
 
-See the `strconv.Parse*` functions for parsing rules.
-
-Nested structs of any depth level are supported, only the leaves of the config
-tree must have the `env` tag.
-
-```go
-os.Setenv("HTTP_PORT", "8080")
-
-var cfg struct {
-    HTTP struct {
-        Port int `env:"HTTP_PORT"`
-    }
-}
-if err := env.Load(&cfg); err != nil {
-    fmt.Println(err)
-}
-
-fmt.Println(cfg.HTTP.Port)
-// Output: 8080
-```
+See the `strconv.Parse*` functions for the parsing rules.
+User-defined types can be used by implementing the `encoding.TextUnmarshaler` interface.
 
 ### Default values
 
-Default values can be specified using the `default` struct tag:
+Default values can be specified using the `default:"VALUE"` struct tag:
 
 ```go
 os.Unsetenv("PORT")
@@ -96,46 +77,35 @@ os.Unsetenv("PORT")
 var cfg struct {
     Port int `env:"PORT" default:"8080"`
 }
-if err := env.Load(&cfg); err != nil {
+if err := env.Load(&cfg, nil); err != nil {
     fmt.Println(err)
 }
 
-fmt.Println(cfg.Port)
-// Output: 8080
+fmt.Println(cfg.Port) // 8080
 ```
 
-### Per-variable options
+### Required
 
-The name of the environment variable can be followed by comma-separated options
-in the form of `env:"VAR,option1,option2,..."`.
-
-#### Required
-
-Use the `required` option to mark the environment variable as required. In case
-no such variable is found, an error of type `NotSetError` will be returned.
+Use the `required` option to mark an environment variable as required.
+If it is not set, an error of type `NotSetError` is returned.
 
 ```go
-os.Unsetenv("HOST")
 os.Unsetenv("PORT")
 
 var cfg struct {
-    Host string `env:"HOST,required"`
-    Port int    `env:"PORT,required"`
+    Port int `env:"PORT,required"`
 }
-if err := env.Load(&cfg); err != nil {
+if err := env.Load(&cfg, nil); err != nil {
     var notSetErr *env.NotSetError
     if errors.As(err, &notSetErr) {
-        fmt.Println(notSetErr.Names)
+        fmt.Println(notSetErr) // env: PORT is required but not set
     }
 }
-
-// Output: [HOST PORT]
 ```
 
-#### Expand
+### Expand
 
-Use the `expand` option to automatically expand the value of the environment
-variable using `os.Expand`.
+Use the `expand` option to automatically expand the value of an environment variable using `os.Expand`.
 
 ```go
 os.Setenv("PORT", "8080")
@@ -144,32 +114,43 @@ os.Setenv("ADDR", "localhost:${PORT}")
 var cfg struct {
     Addr string `env:"ADDR,expand"`
 }
-if err := env.Load(&cfg); err != nil {
+if err := env.Load(&cfg, nil); err != nil {
     fmt.Println(err)
 }
 
-fmt.Println(cfg.Addr)
-// Output: localhost:8080
+fmt.Println(cfg.Addr) // localhost:8080
 ```
 
-### Global options
+### Slice separator
 
-`Load` also accepts global options that apply to all environment variables.
-
-#### Source
-
-By default, `Load` retrieves environment variables values directly from OS.
-To use a different source, provide an implementation of the `Source` interface via the `WithSource` option.
+Space is the default separator used to parse slice values.
+It can be changed with `Options.SliceSep`:
 
 ```go
-// Source represents a source of environment variables.
+os.Setenv("PORTS", "8080,8081,8082")
+
+var cfg struct {
+    Ports []int `env:"PORTS"`
+}
+if err := env.Load(&cfg, &env.Options{SliceSep: ","}); err != nil {
+    fmt.Println(err)
+}
+
+fmt.Println(cfg.Ports) // [8080 8081 8082]
+```
+
+### Source
+
+By default, `Load` retrieves environment variables directly from OS.
+To use a different source, pass an implementation of the `Source` interface via `Options.Source`.
+
+```go
 type Source interface {
-    // LookupEnv retrieves the value of the environment variable named by the key.
     LookupEnv(key string) (value string, ok bool)
 }
 ```
 
-Here's an example of using `Map`, a builtin `Source` implementation useful in tests:
+Here's an example of using `Map`, a `Source` implementation useful in tests:
 
 ```go
 m := env.Map{"PORT": "8080"}
@@ -177,36 +158,16 @@ m := env.Map{"PORT": "8080"}
 var cfg struct {
     Port int `env:"PORT"`
 }
-if err := env.Load(&cfg, env.WithSource(m)); err != nil {
+if err := env.Load(&cfg, &env.Options{Source: m}); err != nil {
     fmt.Println(err)
 }
 
-fmt.Println(cfg.Port)
-// Output: 8080
-```
-
-#### Slice separator
-
-Space is the default separator when parsing slice values. It can be changed
-using the `WithSliceSeparator` option:
-
-```go
-os.Setenv("PORTS", "8080;8081;8082")
-
-var cfg struct {
-    Ports []int `env:"PORTS"`
-}
-if err := env.Load(&cfg, env.WithSliceSeparator(";")); err != nil {
-    fmt.Println(err)
-}
-
-fmt.Println(cfg.Ports)
-// Output: [8080 8081 8082]
+fmt.Println(cfg.Port) // 8080
 ```
 
 ### Usage message
 
-`env` supports printing an auto-generated usage message the same way the `flag` package does it.
+The `Usage` function prints a usage message documenting all defined environment variables.
 
 ```go
 os.Unsetenv("DB_HOST")
@@ -214,21 +175,22 @@ os.Unsetenv("DB_PORT")
 
 var cfg struct {
     DB struct {
-        Host string `env:"DB_HOST,required" desc:"database host"`
-        Port int    `env:"DB_PORT,required" desc:"database port"`
+        Host string `env:"DB_HOST,required" usage:"database host"`
+        Port int    `env:"DB_PORT,required" usage:"database port"`
     }
-    HTTPPort int `env:"HTTP_PORT" default:"8080" desc:"http server port"`
+    HTTPPort int `env:"HTTP_PORT" default:"8080" usage:"http server port"`
 }
-if err := env.Load(&cfg); err != nil {
+if err := env.Load(&cfg, nil); err != nil {
     fmt.Println(err)
     env.Usage(&cfg, os.Stdout)
 }
+```
 
-// Output: env: [DB_HOST DB_PORT] are required but not set
-// Usage:
-//   DB_HOST    string  required      database host
-//   DB_PORT    int     required      database port
-//   HTTP_PORT  int     default 8080  http server port
+```
+Usage:
+  DB_HOST    string  required      database host
+  DB_PORT    int     required      database port
+  HTTP_PORT  int     default 8080  http server port
 ```
 
 [1]: https://12factor.net/config
