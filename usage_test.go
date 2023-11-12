@@ -31,5 +31,5 @@ func TestUsage(t *testing.T) {
 type config struct{}
 
 func (config) Usage(_ []env.Var, w io.Writer) {
-	w.Write([]byte("custom"))
+	_, _ = w.Write([]byte("custom"))
 }
