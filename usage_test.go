@@ -2,6 +2,7 @@ package env_test
 
 import (
 	"bytes"
+	"io"
 	"testing"
 
 	"go-simpler.org/env"
@@ -18,4 +19,17 @@ func TestUsage(t *testing.T) {
 		env.Usage(&cfg, &buf)
 		assert.Equal[E](t, buf.String(), "Usage:\n  FOO  string  default <empty>\n")
 	})
+
+	t.Run("custom usage message", func(t *testing.T) {
+		var buf bytes.Buffer
+		var cfg config
+		env.Usage(&cfg, &buf)
+		assert.Equal[E](t, buf.String(), "custom")
+	})
+}
+
+type config struct{}
+
+func (config) Usage(_ []env.Var, w io.Writer) {
+	w.Write([]byte("custom"))
 }

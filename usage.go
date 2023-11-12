@@ -29,6 +29,14 @@ func Usage(cfg any, w io.Writer) {
 
 	vars := parseVars(v.Elem())
 
+	if u, ok := cfg.(interface{ Usage([]Var, io.Writer) }); ok {
+		u.Usage(vars, w)
+	} else {
+		defaultUsage(vars, w)
+	}
+}
+
+func defaultUsage(vars []Var, w io.Writer) {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	defer tw.Flush()
 
