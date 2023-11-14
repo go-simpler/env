@@ -168,7 +168,7 @@ fmt.Println(cfg.Port) // 8080
 ### Usage message
 
 The `Usage` function prints a usage message documenting all defined environment variables.
-An optional usage string can be added for each environment variable via the `usage:"STRING"` struct tag.
+An optional usage string can be added for each environment variable via the `usage:"STRING"` struct tag:
 
 ```go
 os.Unsetenv("DB_HOST")
@@ -192,6 +192,18 @@ Usage:
   DB_HOST    string  required      database host
   DB_PORT    int     required      database port
   HTTP_PORT  int     default 8080  http server port
+```
+
+The format of the message can be customized by implementing the `Usage([]env.Var, io.Writer)` method:
+
+```go
+type config struct{ ... }
+
+func (config) Usage(vars []env.Var, w io.Writer) {
+    for v := range vars {
+        // write to w.
+    }
+}
 ```
 
 [1]: https://12factor.net/config
