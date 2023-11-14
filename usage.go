@@ -21,6 +21,8 @@ type Var struct {
 }
 
 // Usage writes a usage message documenting all defined environment variables to the given [io.Writer].
+// An optional usage string can be added for each environment variable via the `usage:"STRING"` struct tag.
+// The format of the message can be customized by implementing the Usage([]env.Var, io.Writer) method on the cfg's type.
 func Usage(cfg any, w io.Writer) {
 	v := reflect.ValueOf(cfg)
 	if !structPtr(v) {
@@ -29,6 +31,14 @@ func Usage(cfg any, w io.Writer) {
 
 	vars := parseVars(v.Elem())
 
+	if u, ok := cfg.(interface{ Usage([]Var, io.Writer) }); ok {
+		u.Usage(vars, w)
+	} else {
+		defaultUsage(vars, w)
+	}
+}
+
+func defaultUsage(vars []Var, w io.Writer) {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	defer tw.Flush()
 
