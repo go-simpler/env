@@ -7,6 +7,16 @@ import (
 	"text/tabwriter"
 )
 
+// cache maps the struct type to the [Var] slice parsed from it.
+// It is primarily needed to fix the following bug:
+//
+//	var cfg struct {
+//		Port int `env:"PORT"`
+//	}
+//	env.Load(&cfg, nil)        // 1. sets cfg.Port to 8080
+//	env.Usage(&cfg, os.Stdout) // 2. prints cfg.Port's default == 8080 (instead of 0)
+//
+// It also speeds up [Usage], since there is no need to parse the struct again.
 var cache = make(map[reflect.Type][]Var)
 
 // Var holds the information about an environment variable parsed from the struct field.
