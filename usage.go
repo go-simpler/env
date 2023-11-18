@@ -7,6 +7,8 @@ import (
 	"text/tabwriter"
 )
 
+var cache = make(map[reflect.Type][]Var)
+
 // Var holds the information about an environment variable parsed from the struct field.
 type Var struct {
 	Name     string       // The name of the variable.
@@ -24,12 +26,16 @@ type Var struct {
 // An optional usage string can be added for each environment variable via the `usage:"STRING"` struct tag.
 // The format of the message can be customized by implementing the Usage([]env.Var, io.Writer) method on the cfg's type.
 func Usage(cfg any, w io.Writer) {
-	v := reflect.ValueOf(cfg)
-	if !structPtr(v) {
+	pv := reflect.ValueOf(cfg)
+	if !structPtr(pv) {
 		panic("env: cfg must be a non-nil struct pointer")
 	}
 
-	vars := parseVars(v.Elem())
+	v := pv.Elem()
+	vars, ok := cache[v.Type()]
+	if !ok {
+		vars = parseVars(v)
+	}
 
 	if u, ok := cfg.(interface{ Usage([]Var, io.Writer) }); ok {
 		u.Usage(vars, w)

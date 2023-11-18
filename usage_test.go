@@ -26,6 +26,21 @@ func TestUsage(t *testing.T) {
 		env.Usage(&cfg, &buf)
 		assert.Equal[E](t, buf.String(), "custom")
 	})
+
+	t.Run("vars cache", func(t *testing.T) {
+		m := env.Map{"FOO": "1"}
+
+		var cfg struct {
+			Foo int `env:"FOO"`
+		}
+		err := env.Load(&cfg, &env.Options{Source: m})
+		assert.NoErr[F](t, err)
+		assert.Equal[E](t, cfg.Foo, 1)
+
+		var buf bytes.Buffer
+		env.Usage(&cfg, &buf)
+		assert.Equal[E](t, buf.String(), "Usage:\n  FOO  int  default 0\n")
+	})
 }
 
 type config struct{}

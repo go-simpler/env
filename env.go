@@ -64,12 +64,14 @@ func Load(cfg any, opts *Options) error {
 		opts.SliceSep = " "
 	}
 
-	v := reflect.ValueOf(cfg)
-	if !structPtr(v) {
+	pv := reflect.ValueOf(cfg)
+	if !structPtr(pv) {
 		panic("env: cfg must be a non-nil struct pointer")
 	}
 
-	vars := parseVars(v.Elem())
+	v := pv.Elem()
+	vars := parseVars(v)
+	cache[v.Type()] = vars
 
 	var notset []string
 	for _, v := range vars {
