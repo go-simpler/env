@@ -58,7 +58,6 @@ func defaultUsage(vars []Var, w io.Writer) {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	defer tw.Flush()
 
-	fmt.Fprintf(tw, "Usage:\n")
 	for _, v := range vars {
 		fmt.Fprintf(tw, "\t%s\t%s", v.Name, v.Type)
 		if v.Required {
