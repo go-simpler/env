@@ -17,7 +17,7 @@ func TestUsage(t *testing.T) {
 			Foo string `env:"FOO" default:""`
 		}
 		env.Usage(&cfg, &buf)
-		assert.Equal[E](t, buf.String(), "Usage:\n  FOO  string  default <empty>\n")
+		assert.Equal[E](t, buf.String(), "  FOO  string  default <empty>\n")
 	})
 
 	t.Run("custom usage message", func(t *testing.T) {
@@ -39,7 +39,7 @@ func TestUsage(t *testing.T) {
 
 		var buf bytes.Buffer
 		env.Usage(&cfg, &buf)
-		assert.Equal[E](t, buf.String(), "Usage:\n  FOO  int  default 0\n")
+		assert.Equal[E](t, buf.String(), "  FOO  int  default 0\n")
 	})
 }
 

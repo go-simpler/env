@@ -124,6 +124,7 @@ func ExampleUsage() {
 	}
 	if err := env.Load(&cfg, nil); err != nil {
 		fmt.Println(err)
+		fmt.Println("Usage:")
 		env.Usage(&cfg, os.Stdout)
 	}
 
