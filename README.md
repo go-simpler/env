@@ -27,6 +27,7 @@ which simplifies config management and improves code readability.
 
 ## 📦 Install
 
+Go 1.20+
 ```shell
 go get go-simpler.org/env
 ```
