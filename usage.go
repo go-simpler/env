@@ -23,6 +23,7 @@ var cache = make(map[reflect.Type][]Var)
 type Var struct {
 	Name     string       // The name of the variable.
 	Type     reflect.Type // The type of the variable.
+	Flag     string       // The flag to overwrite the variable.
 	Usage    string       // The usage string parsed from the `usage` tag (if exists).
 	Default  string       // The default value of the variable. Empty, if the variable is required.
 	Required bool         // True, if the variable is marked as required.
