@@ -28,10 +28,11 @@ func TestLoad(t *testing.T) {
 			t.Run(name, func(t *testing.T) {
 				const panicMsg = "env: cfg must be a non-nil struct pointer"
 
-				load := func() { _ = env.Load(cfg, &env.Options{Source: env.Map{}}) }
+				options := env.Options{Source: env.Map{}}
+				load := func() { _ = env.Load(cfg, &options) }
 				assert.Panics[E](t, load, panicMsg)
 
-				usage := func() { env.Usage(cfg, io.Discard) }
+				usage := func() { env.Usage(cfg, io.Discard, &options) }
 				assert.Panics[E](t, usage, panicMsg)
 			})
 		}
@@ -224,24 +225,5 @@ func TestLoad(t *testing.T) {
 				test.checkErr(err)
 			})
 		}
-	})
-	t.Run("nested structs", func(t *testing.T) {
-		m := env.Map{
-			"SOURCE_DB_NAME":      "source_db",
-			"DESTINATION_DB_NAME": "destination_db",
-		}
-
-		type dbConfig struct {
-			Name string `env:"NAME"`
-		}
-
-		var cfg struct {
-			SourceDB      dbConfig `env:"SOURCE_DB_"`
-			DestinationDB dbConfig `env:"DESTINATION_DB_"`
-		}
-		err := env.Load(&cfg, &env.Options{Source: m})
-		assert.NoErr[F](t, err)
-		assert.Equal[E](t, cfg.SourceDB.Name, "source_db")
-		assert.Equal[E](t, cfg.DestinationDB.Name, "destination_db")
 	})
 }

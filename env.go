@@ -12,6 +12,7 @@ import (
 type Options struct {
 	Source   Source // The source of environment variables. The default is [OS].
 	SliceSep string // The separator used to parse slice values. The default is space.
+	NameSep  string // The separator used to join nested struct names. The default is underscore.
 }
 
 // NotSetError is returned when environment variables are marked as required but not set.
@@ -50,9 +51,14 @@ func (e *NotSetError) Error() string {
 //
 // Default values can be specified using the `default:"VALUE"` struct tag.
 //
+// Names of environment variables for nested structs are built by joining
+// the tags using the value defined `NameSep` option.
+//
 // The name of an environment variable can be followed by comma-separated options:
 //   - required: marks the environment variable as required
 //   - expand: expands the value of the environment variable using [os.Expand]
+//
+// These additional options are not supported for nested structs.
 func Load(cfg any, opts *Options) error {
 	if opts == nil {
 		opts = new(Options)
@@ -70,7 +76,7 @@ func Load(cfg any, opts *Options) error {
 	}
 
 	v := pv.Elem()
-	vars := parseVars(v)
+	vars := parseVars(v, opts.NameSep)
 	cache[v.Type()] = vars
 
 	var notset []string
@@ -105,7 +111,7 @@ func Load(cfg any, opts *Options) error {
 	return nil
 }
 
-func parseVars(v reflect.Value) []Var {
+func parseVars(v reflect.Value, nameSep string) []Var {
 	var vars []Var
 
 	for i := 0; i < v.NumField(); i++ {
@@ -116,15 +122,16 @@ func parseVars(v reflect.Value) []Var {
 
 		// special case: a nested struct, parse its fields recursively.
 		if kindOf(field, reflect.Struct) && !implements(field, unmarshalerIface) {
+			// first check the `env` tag of the struct field.
 			var prefix string
 			sf := v.Type().Field(i)
 			value, ok := sf.Tag.Lookup("env")
 			if ok {
-				parts := strings.Split(value, ",")
-				prefix = parts[0]
+				prefix = value
 			}
-			for _, v := range parseVars(field) {
-				v.Name = prefix + v.Name
+
+			for _, v := range parseVars(field, nameSep) {
+				v.Name = prefix + nameSep + v.Name
 				vars = append(vars, v)
 			}
 			continue

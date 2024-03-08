@@ -37,19 +37,52 @@ func ExampleLoad_defaultValue() {
 }
 
 func ExampleLoad_nestedStruct() {
-	os.Setenv("HTTP_PORT", "8080")
+	os.Setenv("DBPORT", "5432")
+	os.Setenv("SECONDARYDBPORT", "3306")
+
+	type DBConf struct {
+		Host string `env:"DBHOST" default:"localhost"`
+		Port int    `env:"DBPORT"`
+	}
 
 	var cfg struct {
-		HTTP struct {
-			Port int `env:"HTTP_PORT"`
-		}
+		Primary   DBConf
+		Secondary DBConf `env:"SECONDARY"`
 	}
 	if err := env.Load(&cfg, nil); err != nil {
 		fmt.Println(err)
 	}
 
-	fmt.Println(cfg.HTTP.Port)
-	// Output: 8080
+	fmt.Printf("%v\n", cfg.Primary)
+	fmt.Printf("%v\n", cfg.Secondary)
+	// Output: {localhost 5432}
+	// {localhost 3306}
+}
+
+func ExampleLoad_underscoredNestedStruct() {
+	os.Setenv("SOURCE_DB_PORT", "3306")
+	os.Setenv("SOURCE_DB_HOST", "example.db")
+	os.Setenv("DESTINATION_DB_PORT", "5432")
+
+	type DB struct {
+		Host string `env:"DB_HOST" default:"localhost"`
+		Port int    `env:"DB_PORT"`
+	}
+
+	var cfg struct {
+		Source      DB `env:"SOURCE"`
+		Destination DB `env:"DESTINATION"`
+	}
+	if err := env.Load(&cfg, &env.Options{
+		NameSep: "_",
+	}); err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Printf("%v\n", cfg.Source)
+	fmt.Printf("%v\n", cfg.Destination)
+	// Output: {example.db 3306}
+	// {localhost 5432}
 }
 
 func ExampleLoad_required() {
@@ -125,7 +158,7 @@ func ExampleUsage() {
 	if err := env.Load(&cfg, nil); err != nil {
 		fmt.Println(err)
 		fmt.Println("Usage:")
-		env.Usage(&cfg, os.Stdout)
+		env.Usage(&cfg, os.Stdout, nil)
 	}
 
 	// Output: env: DB_HOST DB_PORT are required but not set
