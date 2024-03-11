@@ -16,14 +16,14 @@ func TestUsage(t *testing.T) {
 		var cfg struct {
 			Foo string `env:"FOO" default:""`
 		}
-		env.Usage(&cfg, &buf, nil)
+		env.Usage(&cfg, &buf)
 		assert.Equal[E](t, buf.String(), "  FOO  string  default <empty>\n")
 	})
 
 	t.Run("custom usage message", func(t *testing.T) {
 		var buf bytes.Buffer
 		var cfg config
-		env.Usage(&cfg, &buf, nil)
+		env.Usage(&cfg, &buf)
 		assert.Equal[E](t, buf.String(), "custom")
 	})
 
@@ -38,7 +38,7 @@ func TestUsage(t *testing.T) {
 		assert.Equal[E](t, cfg.Foo, 1)
 
 		var buf bytes.Buffer
-		env.Usage(&cfg, &buf, nil)
+		env.Usage(&cfg, &buf)
 		assert.Equal[E](t, buf.String(), "  FOO  int  default 0\n")
 	})
 }
