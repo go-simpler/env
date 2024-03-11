@@ -225,23 +225,4 @@ func TestLoad(t *testing.T) {
 			})
 		}
 	})
-	t.Run("nested structs", func(t *testing.T) {
-		m := env.Map{
-			"SOURCE_DB_NAME":      "source_db",
-			"DESTINATION_DB_NAME": "destination_db",
-		}
-
-		type dbConfig struct {
-			Name string `env:"NAME"`
-		}
-
-		var cfg struct {
-			SourceDB      dbConfig `env:"SOURCE_DB_"`
-			DestinationDB dbConfig `env:"DESTINATION_DB_"`
-		}
-		err := env.Load(&cfg, &env.Options{Source: m})
-		assert.NoErr[F](t, err)
-		assert.Equal[E](t, cfg.SourceDB.Name, "source_db")
-		assert.Equal[E](t, cfg.DestinationDB.Name, "destination_db")
-	})
 }

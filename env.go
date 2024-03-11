@@ -116,12 +116,12 @@ func parseVars(v reflect.Value) []Var {
 
 		// special case: a nested struct, parse its fields recursively.
 		if kindOf(field, reflect.Struct) && !implements(field, unmarshalerIface) {
+			// first check the env tag of the struct field.
 			var prefix string
 			sf := v.Type().Field(i)
 			value, ok := sf.Tag.Lookup("env")
 			if ok {
-				parts := strings.Split(value, ",")
-				prefix = parts[0]
+				prefix = value
 			}
 			for _, v := range parseVars(field) {
 				v.Name = prefix + v.Name
