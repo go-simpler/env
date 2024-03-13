@@ -52,6 +52,27 @@ func ExampleLoad_nestedStruct() {
 	// Output: 8080
 }
 
+func ExampleLoad_nestedStructPrefixed() {
+	os.Setenv("DB_HOST", "localhost")
+	os.Setenv("DB_PORT", "5432")
+
+	var cfg struct {
+		DB struct {
+			Host string `env:"HOST"`
+			Port int    `env:"PORT"`
+		} `env:"DB_"`
+	}
+	if err := env.Load(&cfg, nil); err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(cfg.DB.Host)
+	fmt.Println(cfg.DB.Port)
+	// Output:
+	// localhost
+	// 5432
+}
+
 func ExampleLoad_required() {
 	os.Unsetenv("PORT")
 

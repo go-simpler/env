@@ -48,6 +48,12 @@ func (e *NotSetError) Error() string {
 // See the [strconv].Parse* functions for the parsing rules.
 // User-defined types can be used by implementing the [encoding.TextUnmarshaler] interface.
 //
+// Nested struct of any depth level are supported,
+// allowing grouping of related environment variables.
+// A nested struct can have the optional `env:"PREFIX"` tag.
+// In this case, the environment variables declared by its fields are prefixed with PREFIX.
+// This rule is applied recursively to all nested structs.
+//
 // Default values can be specified using the `default:"VALUE"` struct tag.
 //
 // The name of an environment variable can be followed by comma-separated options:
@@ -116,7 +122,16 @@ func parseVars(v reflect.Value) []Var {
 
 		// special case: a nested struct, parse its fields recursively.
 		if kindOf(field, reflect.Struct) && !implements(field, unmarshalerIface) {
-			vars = append(vars, parseVars(field)...)
+			var prefix string
+			sf := v.Type().Field(i)
+			value, ok := sf.Tag.Lookup("env")
+			if ok {
+				prefix = value
+			}
+			for _, v := range parseVars(field) {
+				v.Name = prefix + v.Name
+				vars = append(vars, v)
+			}
 			continue
 		}
 
