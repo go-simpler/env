@@ -37,26 +37,40 @@ func ExampleLoad_defaultValue() {
 }
 
 func ExampleLoad_nestedStruct() {
-	os.Setenv("DBPORT", "5432")
-	os.Setenv("SECONDARYDBPORT", "3306")
-
-	type DBConf struct {
-		Host string `env:"DBHOST" default:"localhost"`
-		Port int    `env:"DBPORT"`
-	}
+	os.Setenv("HTTP_PORT", "8080")
 
 	var cfg struct {
-		Primary   DBConf
-		Secondary DBConf `env:"SECONDARY"`
+		HTTP struct {
+			Port int `env:"HTTP_PORT"`
+		}
 	}
 	if err := env.Load(&cfg, nil); err != nil {
 		fmt.Println(err)
 	}
 
-	fmt.Printf("%v\n", cfg.Primary)
-	fmt.Printf("%v\n", cfg.Secondary)
-	// Output: {localhost 5432}
-	// {localhost 3306}
+	fmt.Println(cfg.HTTP.Port)
+	// Output: 8080
+}
+
+func ExampleLoad_nestedStructPrefixed() {
+	os.Setenv("DB_HOST", "localhost")
+	os.Setenv("DB_PORT", "5432")
+
+	var cfg struct {
+		DB struct {
+			Host string `env:"HOST"`
+			Port int    `env:"PORT"`
+		} `env:"DB_"`
+	}
+	if err := env.Load(&cfg, nil); err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(cfg.DB.Host)
+	fmt.Println(cfg.DB.Port)
+	// Output:
+	// localhost
+	// 5432
 }
 
 func ExampleLoad_required() {

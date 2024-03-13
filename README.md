@@ -68,6 +68,48 @@ fmt.Println(cfg.Port) // 8080
 See the `strconv.Parse*` functions for the parsing rules.
 User-defined types can be used by implementing the `encoding.TextUnmarshaler` interface.
 
+### Nested structs
+
+Nested struct of any depth level are supported,
+allowing grouping of related environment variables.
+
+```go
+os.Setenv("HTTP_PORT", "8080")
+
+var cfg struct {
+    HTTP struct {
+        Port int `env:"HTTP_PORT"`
+    }
+}
+if err := env.Load(&cfg, nil); err != nil {
+    fmt.Println(err)
+}
+
+fmt.Println(cfg.HTTP.Port) // 8080
+```
+
+A nested struct can have the optional `env:"PREFIX"` tag.
+In this case, the environment variables declared by its fields are prefixed with PREFIX.
+This rule is applied recursively to all nested structs.
+
+```go
+os.Setenv("DB_HOST", "localhost")
+os.Setenv("DB_PORT", "5432")
+
+var cfg struct {
+    DB struct {
+        Host string `env:"HOST"`
+        Port int    `env:"PORT"`
+    } `env:"DB_"`
+}
+if err := env.Load(&cfg, nil); err != nil {
+    fmt.Println(err)
+}
+
+fmt.Println(cfg.DB.Host) // localhost
+fmt.Println(cfg.DB.Port) // 5432
+```
+
 ### Default values
 
 Default values can be specified using the `default:"VALUE"` struct tag:
