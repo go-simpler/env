@@ -10,6 +10,8 @@ on:
 jobs:
   test:
     uses: go-simpler/.github/.github/workflows/test.yml@main
+    with:
+      packages: '.' # ignore `internal/assert`
   lint:
     uses: go-simpler/.github/.github/workflows/lint.yml@main
   vuln:
