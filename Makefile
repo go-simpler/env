@@ -4,10 +4,10 @@
 all: test lint
 
 test:
-	go test -race -shuffle=on -cover ./...
+	go test -race -shuffle=on -cover .
 
 test/cover:
-	go test -race -shuffle=on -coverprofile=coverage.out ./...
+	go test -race -shuffle=on -coverprofile=coverage.out .
 	go tool cover -html=coverage.out
 
 lint:
@@ -19,6 +19,7 @@ tidy:
 generate:
 	go generate ./...
 
+# run `make pre-commit` once to install the hook.
 pre-commit: .git/hooks/pre-commit test lint tidy generate
 	git diff --exit-code
 
