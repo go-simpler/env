@@ -13,8 +13,8 @@ import (
 //	var cfg struct {
 //		Port int `env:"PORT"`
 //	}
-//	env.Load(&cfg, nil)        // 1. sets cfg.Port to 8080
-//	env.Usage(&cfg, os.Stdout) // 2. prints cfg.Port's default == 8080 (instead of 0)
+//	env.Load(&cfg, nil)             // 1. sets cfg.Port to 8080
+//	env.Usage(&cfg, os.Stdout, nil) // 2. prints cfg.Port's default == 8080 (instead of 0)
 //
 // It also speeds up [Usage], since there is no need to parse the struct again.
 var cache = make(map[reflect.Type][]Var)
@@ -34,8 +34,8 @@ type Var struct {
 
 // Usage writes a usage message documenting all defined environment variables to the given [io.Writer].
 // An optional usage string can be added for each environment variable via the `usage:"STRING"` struct tag.
-// The format of the message can be customized by implementing the Usage([]env.Var, io.Writer) method on the cfg's type.
-func Usage(cfg any, w io.Writer) {
+// The format of the message can be customized by implementing the Usage([]env.Var, io.Writer, *env.Options) method on the cfg's type.
+func Usage(cfg any, w io.Writer, opts *Options) {
 	pv := reflect.ValueOf(cfg)
 	if !structPtr(pv) {
 		panic("env: cfg must be a non-nil struct pointer")
@@ -47,14 +47,18 @@ func Usage(cfg any, w io.Writer) {
 		vars = parseVars(v)
 	}
 
-	if u, ok := cfg.(interface{ Usage([]Var, io.Writer) }); ok {
-		u.Usage(vars, w)
+	if u, ok := cfg.(interface {
+		Usage([]Var, io.Writer, *Options)
+	}); ok {
+		u.Usage(vars, w, opts)
 	} else {
-		defaultUsage(vars, w)
+		defaultUsage(vars, w, opts)
 	}
 }
 
-func defaultUsage(vars []Var, w io.Writer) {
+func defaultUsage(vars []Var, w io.Writer, _ *Options) {
+	// TODO: use opts.SliceSep to parse slice values.
+
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	defer tw.Flush()
 

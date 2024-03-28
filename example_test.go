@@ -146,7 +146,7 @@ func ExampleUsage() {
 	if err := env.Load(&cfg, nil); err != nil {
 		fmt.Println(err)
 		fmt.Println("Usage:")
-		env.Usage(&cfg, os.Stdout)
+		env.Usage(&cfg, os.Stdout, nil)
 	}
 
 	// Output: env: DB_HOST DB_PORT are required but not set

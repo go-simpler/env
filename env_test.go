@@ -31,7 +31,7 @@ func TestLoad(t *testing.T) {
 				load := func() { _ = env.Load(cfg, &env.Options{Source: env.Map{}}) }
 				assert.Panics[E](t, load, panicMsg)
 
-				usage := func() { env.Usage(cfg, io.Discard) }
+				usage := func() { env.Usage(cfg, io.Discard, nil) }
 				assert.Panics[E](t, usage, panicMsg)
 			})
 		}
