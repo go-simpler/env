@@ -2,16 +2,35 @@
 package env
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
 // Options are the options for the [Load] function.
 type Options struct {
-	Source   Source // The source of environment variables. The default is [OS].
-	SliceSep string // The separator used to parse slice values. The default is space.
+	Source   Source        // The source of environment variables. The default is [OS].
+	SliceSep string        // The separator used to parse slice values. The default is space.
+	FlagSet  *flag.FlagSet // ...
+	FlagArgs []string      // ...
+}
+
+func (o *Options) init() {
+	if o.Source == nil {
+		o.Source = OS
+	}
+	if o.SliceSep == "" {
+		o.SliceSep = " "
+	}
+	if o.FlagSet == nil {
+		o.FlagSet = flag.CommandLine
+	}
+	if o.FlagArgs == nil {
+		o.FlagArgs = os.Args[1:]
+	}
 }
 
 // NotSetError is returned when environment variables are marked as required but not set.
@@ -63,12 +82,7 @@ func Load(cfg any, opts *Options) error {
 	if opts == nil {
 		opts = new(Options)
 	}
-	if opts.Source == nil {
-		opts.Source = OS
-	}
-	if opts.SliceSep == "" {
-		opts.SliceSep = " "
-	}
+	opts.init()
 
 	pv := reflect.ValueOf(cfg)
 	if !structPtr(pv) {
@@ -79,10 +93,34 @@ func Load(cfg any, opts *Options) error {
 	vars := parseVars(v)
 	cache[v.Type()] = vars
 
+	for _, v := range vars {
+		if v.Flag == "" {
+			continue
+		}
+		if v.Type.Kind() != reflect.Bool {
+			opts.FlagSet.String(v.Flag, v.Default, v.Usage)
+			continue
+		}
+		// handle flags without a value, e.g. -help.
+		value, err := strconv.ParseBool(v.Default) // TODO: default may be empty.
+		if err != nil {
+			return fmt.Errorf("parsing bool: %w", err)
+		}
+		opts.FlagSet.Bool(v.Flag, value, v.Usage)
+	}
+
+	if err := opts.FlagSet.Parse(opts.FlagArgs); err != nil {
+		return fmt.Errorf("parsing flags: %w", err)
+	}
+
 	var notset []string
 	for _, v := range vars {
-		value, ok := lookupEnv(opts.Source, v.Name, v.Expand)
-		if !ok {
+		value, envSet := lookupEnv(opts.Source, v.Name, v.Expand)
+		flagValue, flagSet := lookupFlag(opts.FlagSet, v.Flag)
+		if flagSet {
+			value = flagValue // flags have higher priority.
+		}
+		if !envSet && !flagSet {
 			if v.Required {
 				notset = append(notset, v.Name)
 				continue
@@ -135,8 +173,8 @@ func parseVars(v reflect.Value) []Var {
 			continue
 		}
 
-		sf := v.Type().Field(i)
-		value, ok := sf.Tag.Lookup("env")
+		tags := v.Type().Field(i).Tag
+		value, ok := tags.Lookup("env")
 		if !ok {
 			continue
 		}
@@ -159,7 +197,7 @@ func parseVars(v reflect.Value) []Var {
 			}
 		}
 
-		defValue, defSet := sf.Tag.Lookup("default")
+		defValue, defSet := tags.Lookup("default")
 		switch {
 		case defSet && required:
 			panic("env: `required` and `default` can't be used simultaneously")
@@ -170,7 +208,8 @@ func parseVars(v reflect.Value) []Var {
 		vars = append(vars, Var{
 			Name:          name,
 			Type:          field.Type(),
-			Usage:         sf.Tag.Get("usage"),
+			Flag:          tags.Get("flag"),
+			Usage:         tags.Get("usage"),
 			Default:       defValue,
 			Required:      required,
 			Expand:        expand,
@@ -195,4 +234,16 @@ func lookupEnv(src Source, key string, expand bool) (string, bool) {
 		return v
 	}
 	return os.Expand(value, mapping), true
+}
+
+func lookupFlag(fs *flag.FlagSet, name string) (string, bool) {
+	var value string
+	var set bool
+	fs.Visit(func(fl *flag.Flag) {
+		if fl.Name == name {
+			value = fl.Value.String()
+			set = true
+		}
+	})
+	return value, set
 }
