@@ -211,7 +211,7 @@ fmt.Println(cfg.Port) // 8080
 ### Usage message
 
 The `Usage` function prints a usage message documenting all defined environment variables.
-An optional usage string can be added for each environment variable via the `usage:"STRING"` struct tag:
+An optional usage string can be added to environment variables using the `usage:"STRING"` struct tag:
 
 ```go
 os.Unsetenv("DB_HOST")

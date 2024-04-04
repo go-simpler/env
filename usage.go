@@ -7,7 +7,7 @@ import (
 	"text/tabwriter"
 )
 
-// cache maps the struct type to the [Var] slice parsed from it.
+// cache maps a struct type to the [Var] slice parsed from it.
 // It is primarily needed to fix the following bug:
 //
 //	var cfg struct {
@@ -19,7 +19,7 @@ import (
 // It also speeds up [Usage], since there is no need to parse the struct again.
 var cache = make(map[reflect.Type][]Var)
 
-// Var holds the information about an environment variable parsed from the struct field.
+// Var holds the information about the environment variable parsed from a struct field.
 type Var struct {
 	Name     string       // The name of the variable.
 	Type     reflect.Type // The type of the variable.
@@ -33,7 +33,8 @@ type Var struct {
 }
 
 // Usage writes a usage message documenting all defined environment variables to the given [io.Writer].
-// An optional usage string can be added for each environment variable via the `usage:"STRING"` struct tag.
+// The caller must pass the same [Options] to both [Load] and [Usage], or nil.
+// An optional usage string can be added to environment variables using the `usage:"STRING"` struct tag.
 // The format of the message can be customized by implementing the Usage([]env.Var, io.Writer, *env.Options) method on the cfg's type.
 func Usage(cfg any, w io.Writer, opts *Options) {
 	pv := reflect.ValueOf(cfg)
