@@ -12,6 +12,7 @@ import (
 type Options struct {
 	Source   Source // The source of environment variables. The default is [OS].
 	SliceSep string // The separator used to parse slice values. The default is space.
+	NameSep  string // The separator used to join nested struct names. The default is empty string.
 }
 
 // NotSetError is returned when environment variables are marked as required but not set.
@@ -76,7 +77,7 @@ func Load(cfg any, opts *Options) error {
 	}
 
 	v := pv.Elem()
-	vars := parseVars(v)
+	vars := parseVars(v, opts)
 	cache[v.Type()] = vars
 
 	var notset []string
@@ -111,7 +112,7 @@ func Load(cfg any, opts *Options) error {
 	return nil
 }
 
-func parseVars(v reflect.Value) []Var {
+func parseVars(v reflect.Value, opts *Options) []Var {
 	var vars []Var
 
 	for i := 0; i < v.NumField(); i++ {
@@ -128,7 +129,10 @@ func parseVars(v reflect.Value) []Var {
 			if ok {
 				prefix = value
 			}
-			for _, v := range parseVars(field) {
+			if opts != nil {
+				prefix += opts.NameSep
+			}
+			for _, v := range parseVars(field, opts) {
 				v.Name = prefix + v.Name
 				vars = append(vars, v)
 			}
