@@ -91,6 +91,7 @@ fmt.Println(cfg.HTTP.Port) // 8080
 A nested struct can have the optional `env:"PREFIX"` tag.
 In this case, the environment variables declared by its fields are prefixed with PREFIX.
 This rule is applied recursively to all nested structs.
+Nested field names are separated by a string defined in `NameSep` option, empty string by default.
 
 ```go
 os.Setenv("DB_HOST", "localhost")
@@ -100,14 +101,16 @@ var cfg struct {
     DB struct {
         Host string `env:"HOST"`
         Port int    `env:"PORT"`
-    } `env:"DB_"`
+    } `env:"DB"`
 }
-if err := env.Load(&cfg, nil); err != nil {
+if err := env.Load(&cfg, &env.Options{
+    NameSep: "_",
+}); err != nil {
     fmt.Println(err)
 }
 
-fmt.Println(cfg.DB.Host) // localhost
-fmt.Println(cfg.DB.Port) // 5432
+fmt.Println(cfg.DB.Host)
+fmt.Println(cfg.DB.Port)
 ```
 
 ### Default values
@@ -181,6 +184,32 @@ if err := env.Load(&cfg, &env.Options{SliceSep: ","}); err != nil {
 
 fmt.Println(cfg.Ports) // [8080 8081 8082]
 ```
+
+### Names separator
+By defaul variable names of nested structs are built with just simple concatenation.
+
+So given config like the following:
+
+```go
+var cfg struct {
+    DB struct {
+        Host string `env:"HOST"`
+        Port int    `env:"PORT"`
+    } `env:"DB"`
+}
+```
+
+would parse variables `DBHOST` and `DBPORT`. 
+
+This can be changed with `Options.NameSep`, so parsing it like
+
+```go
+env.Load(&cfg, &env.Options{NameSep: "_"})
+```
+
+Will parse `DB_HOST` and `DB_PORT` variable names.
+Values like `"-"`, or any other string that builds valid environment variables 
+are also possible
 
 ### Source
 
