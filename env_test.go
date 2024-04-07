@@ -13,7 +13,7 @@ import (
 	. "go-simpler.org/env/internal/assert/EF"
 )
 
-//go:generate go run -tags=copier go-simpler.org/assert/cmd/copier@v0.7.0 -dir=internal
+//go:generate go run -tags=cp go-simpler.org/assert/cmd/cp@v0.8.0 -dir=internal
 
 func TestLoad(t *testing.T) {
 	t.Run("invalid argument", func(t *testing.T) {
@@ -31,7 +31,7 @@ func TestLoad(t *testing.T) {
 				load := func() { _ = env.Load(cfg, &env.Options{Source: env.Map{}}) }
 				assert.Panics[E](t, load, panicMsg)
 
-				usage := func() { env.Usage(cfg, io.Discard) }
+				usage := func() { env.Usage(cfg, io.Discard, nil) }
 				assert.Panics[E](t, usage, panicMsg)
 			})
 		}
