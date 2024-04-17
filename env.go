@@ -127,10 +127,7 @@ func parseVars(v reflect.Value, opts *Options) []Var {
 			sf := v.Type().Field(i)
 			value, ok := sf.Tag.Lookup("env")
 			if ok {
-				prefix = value
-			}
-			if opts != nil {
-				prefix += opts.NameSep
+				prefix = value + opts.NameSep
 			}
 			for _, v := range parseVars(field, opts) {
 				v.Name = prefix + v.Name

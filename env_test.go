@@ -61,6 +61,22 @@ func TestLoad(t *testing.T) {
 		assert.Panics[E](t, load, "env: `required` and `default` can't be used simultaneously")
 	})
 
+	t.Run("nested fields", func(t *testing.T) {
+		m := env.Map{
+			"_CLIENT_HOST": "bad",
+			"CLIENT_HOST":  "good",
+		}
+
+		var cfg struct {
+			Client struct {
+				Host string `env:"CLIENT_HOST"`
+			}
+		}
+		err := env.Load(&cfg, &env.Options{Source: m, NameSep: "_"})
+		assert.NoErr[F](t, err)
+		assert.Equal[E](t, cfg.Client.Host, "good")
+	})
+
 	t.Run("unsupported type", func(t *testing.T) {
 		m := env.Map{"FOO": "1+2i"}
 
@@ -103,7 +119,6 @@ func TestLoad(t *testing.T) {
 			"DURATION": "1s", "DURATIONS": "1s 1m",
 			"IP": "0.0.0.0", "IPS": "0.0.0.0 255.255.255.255",
 		}
-
 		var cfg struct {
 			Int       int             `env:"INT"`
 			Ints      []int           `env:"INTS"`
