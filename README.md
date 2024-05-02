@@ -93,14 +93,14 @@ In this case, the environment variables declared by its fields are prefixed with
 This rule is applied recursively to all nested structs.
 
 ```go
-os.Setenv("DB_HOST", "localhost")
-os.Setenv("DB_PORT", "5432")
+os.Setenv("DBHOST", "localhost")
+os.Setenv("DBPORT", "5432")
 
 var cfg struct {
     DB struct {
         Host string `env:"HOST"`
         Port int    `env:"PORT"`
-    } `env:"DB_"`
+    } `env:"DB"`
 }
 if err := env.Load(&cfg, nil); err != nil {
     fmt.Println(err)
@@ -180,6 +180,29 @@ if err := env.Load(&cfg, &env.Options{SliceSep: ","}); err != nil {
 }
 
 fmt.Println(cfg.Ports) // [8080 8081 8082]
+```
+
+### Name separator
+
+By default, environment variable names are concatenated from nested struct tags as is.
+If `Options.NameSep` is not empty, it is used as the separator:
+
+```go
+os.Setenv("DB_HOST", "localhost")
+os.Setenv("DB_PORT", "5432")
+
+var cfg struct {
+	DB struct {
+		Host string `env:"HOST"`
+		Port int    `env:"PORT"`
+	} `env:"DB"`
+}
+if err := env.Load(&cfg, &env.Options{NameSep: "_"}); err != nil {
+	fmt.Println(err)
+}
+
+fmt.Println(cfg.DB.Host) // localhost
+fmt.Println(cfg.DB.Port) // 5432
 ```
 
 ### Source

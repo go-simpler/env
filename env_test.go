@@ -61,6 +61,23 @@ func TestLoad(t *testing.T) {
 		assert.Panics[E](t, load, "env: `required` and `default` can't be used simultaneously")
 	})
 
+	t.Run("nested struct w/ and w/o tag", func(t *testing.T) {
+		m := env.Map{"A_FOO": "1", "BAR": "2"}
+
+		var cfg struct {
+			A struct {
+				Foo int `env:"FOO"`
+			} `env:"A"`
+			B struct {
+				Bar int `env:"BAR"`
+			}
+		}
+		err := env.Load(&cfg, &env.Options{Source: m, NameSep: "_"})
+		assert.NoErr[F](t, err)
+		assert.Equal[E](t, cfg.A.Foo, 1)
+		assert.Equal[E](t, cfg.B.Bar, 2)
+	})
+
 	t.Run("unsupported type", func(t *testing.T) {
 		m := env.Map{"FOO": "1+2i"}
 

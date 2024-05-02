@@ -45,7 +45,7 @@ func Usage(cfg any, w io.Writer, opts *Options) {
 	v := pv.Elem()
 	vars, ok := cache[v.Type()]
 	if !ok {
-		vars = parseVars(v)
+		vars = parseVars(v, opts)
 	}
 
 	if u, ok := cfg.(interface {
