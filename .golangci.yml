@@ -7,7 +7,6 @@ linters:
     - govet
     - ineffassign
     - staticcheck
-    - typecheck
     - unused
     # disabled by default:
     - gocritic

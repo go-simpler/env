@@ -15,9 +15,9 @@ type Options struct {
 	NameSep  string // The separator used to concatenate environment variable names from nested struct tags. The default is an empty string.
 }
 
-// NotSetError is returned when environment variables are marked as required but not set.
+// NotSetError is returned when required environment variables are not set.
 type NotSetError struct {
-	Names []string // The names of the missing environment variables.
+	Names []string
 }
 
 // Error implements the error interface.
@@ -51,9 +51,8 @@ func (e *NotSetError) Error() string {
 //
 // Nested struct of any depth level are supported,
 // allowing grouping of related environment variables.
-// A nested struct can have the optional `env:"PREFIX"` tag.
-// In this case, the environment variables declared by its fields are prefixed with PREFIX.
-// This rule is applied recursively to all nested structs.
+// If a nested struct has the optional `env:"PREFIX"` tag,
+// the environment variables declared by its fields are prefixed with PREFIX.
 //
 // Default values can be specified using the `default:"VALUE"` struct tag.
 //
@@ -126,12 +125,11 @@ func parseVars(v reflect.Value, opts *Options) []Var {
 			continue
 		}
 
-		// special case: a nested struct, parse its fields recursively.
+		tags := v.Type().Field(i).Tag
+
 		if kindOf(field, reflect.Struct) && !implements(field, unmarshalerIface) {
 			var prefix string
-			sf := v.Type().Field(i)
-			value, ok := sf.Tag.Lookup("env")
-			if ok {
+			if value, ok := tags.Lookup("env"); ok {
 				prefix = value + opts.NameSep
 			}
 			for _, v := range parseVars(field, opts) {
@@ -141,8 +139,7 @@ func parseVars(v reflect.Value, opts *Options) []Var {
 			continue
 		}
 
-		sf := v.Type().Field(i)
-		value, ok := sf.Tag.Lookup("env")
+		value, ok := tags.Lookup("env")
 		if !ok {
 			continue
 		}
@@ -165,7 +162,7 @@ func parseVars(v reflect.Value, opts *Options) []Var {
 			}
 		}
 
-		defValue, defSet := sf.Tag.Lookup("default")
+		defValue, defSet := tags.Lookup("default")
 		switch {
 		case defSet && required:
 			panic("env: `required` and `default` can't be used simultaneously")
@@ -176,7 +173,7 @@ func parseVars(v reflect.Value, opts *Options) []Var {
 		vars = append(vars, Var{
 			Name:          name,
 			Type:          field.Type(),
-			Usage:         sf.Tag.Get("usage"),
+			Usage:         tags.Get("usage"),
 			Default:       defValue,
 			Required:      required,
 			Expand:        expand,

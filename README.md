@@ -21,13 +21,14 @@ which simplifies config management and improves code readability.
 ## 🚀 Features
 
 * Support for all common types and user-defined types
-* Options: [required](#required), [expand](#expand), [slice separator](#slice-separator)
 * Configurable [source](#source) of environment variables
+* Options: [required](#required), [expand](#expand), [slice separator](#slice-separator), [name separator](#name-separator)
 * Auto-generated [usage message](#usage-message)
 
 ## 📦 Install
 
 Go 1.20+
+
 ```shell
 go get go-simpler.org/env
 ```
@@ -38,7 +39,7 @@ go get go-simpler.org/env
 It loads environment variables into the given struct.
 
 The struct fields must have the `env:"VAR"` struct tag,
-where VAR is the name of the corresponding environment variable.
+where `VAR` is the name of the corresponding environment variable.
 Unexported fields are ignored.
 
 ```go
@@ -74,33 +75,35 @@ Nested struct of any depth level are supported,
 allowing grouping of related environment variables.
 
 ```go
-os.Setenv("HTTP_PORT", "8080")
+os.Setenv("DB_HOST", "localhost")
+os.Setenv("DB_PORT", "5432")
 
 var cfg struct {
-    HTTP struct {
-        Port int `env:"HTTP_PORT"`
+    DB struct {
+        Host string `env:"DB_HOST"`
+        Port int    `env:"DB_PORT"`
     }
 }
 if err := env.Load(&cfg, nil); err != nil {
     fmt.Println(err)
 }
 
-fmt.Println(cfg.HTTP.Port) // 8080
+fmt.Println(cfg.DB.Host) // localhost
+fmt.Println(cfg.DB.Port) // 5432
 ```
 
-A nested struct can have the optional `env:"PREFIX"` tag.
-In this case, the environment variables declared by its fields are prefixed with PREFIX.
-This rule is applied recursively to all nested structs.
+If a nested struct has the optional `env:"PREFIX"` tag,
+the environment variables declared by its fields are prefixed with `PREFIX`.
 
 ```go
-os.Setenv("DBHOST", "localhost")
-os.Setenv("DBPORT", "5432")
+os.Setenv("DB_HOST", "localhost")
+os.Setenv("DB_PORT", "5432")
 
 var cfg struct {
     DB struct {
         Host string `env:"HOST"`
         Port int    `env:"PORT"`
-    } `env:"DB"`
+    } `env:"DB_"`
 }
 if err := env.Load(&cfg, nil); err != nil {
     fmt.Println(err)
@@ -112,7 +115,7 @@ fmt.Println(cfg.DB.Port) // 5432
 
 ### Default values
 
-Default values can be specified using the `default:"VALUE"` struct tag:
+Default values can be specified using the `default:"VALUE"` struct tag.
 
 ```go
 os.Unsetenv("PORT")
@@ -167,7 +170,7 @@ fmt.Println(cfg.Addr) // localhost:8080
 ### Slice separator
 
 Space is the default separator used to parse slice values.
-It can be changed with `Options.SliceSep`:
+It can be changed with `Options.SliceSep`.
 
 ```go
 os.Setenv("PORTS", "8080,8081,8082")
@@ -185,7 +188,7 @@ fmt.Println(cfg.Ports) // [8080 8081 8082]
 ### Name separator
 
 By default, environment variable names are concatenated from nested struct tags as is.
-If `Options.NameSep` is not empty, it is used as the separator:
+If `Options.NameSep` is not empty, it is used as the separator.
 
 ```go
 os.Setenv("DB_HOST", "localhost")
@@ -216,7 +219,7 @@ type Source interface {
 }
 ```
 
-Here's an example of using `Map`, a `Source` implementation useful in tests:
+Here's an example of using `Map`, a `Source` implementation useful in tests.
 
 ```go
 m := env.Map{"PORT": "8080"}
@@ -234,7 +237,7 @@ fmt.Println(cfg.Port) // 8080
 ### Usage message
 
 The `Usage` function prints a usage message documenting all defined environment variables.
-An optional usage string can be added to environment variables using the `usage:"STRING"` struct tag:
+An optional usage string can be added to environment variables with the `usage:"STRING"` struct tag.
 
 ```go
 os.Unsetenv("DB_HOST")
@@ -261,7 +264,7 @@ Usage:
   HTTP_PORT  int     default 8080  http server port
 ```
 
-The format of the message can be customized by implementing the `Usage([]env.Var, io.Writer, *env.Options)` method:
+The format of the message can be customized by implementing the `Usage([]env.Var, io.Writer, *env.Options)` method.
 
 ```go
 type Config struct{ ... }

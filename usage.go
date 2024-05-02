@@ -8,7 +8,7 @@ import (
 )
 
 // cache maps a struct type to the [Var] slice parsed from it.
-// It is primarily needed to fix the following bug:
+// It is needed to fix the following bug:
 //
 //	var cfg struct {
 //		Port int `env:"PORT"`
@@ -16,7 +16,7 @@ import (
 //	env.Load(&cfg, nil)             // 1. sets cfg.Port to 8080
 //	env.Usage(&cfg, os.Stdout, nil) // 2. prints cfg.Port's default == 8080 (instead of 0)
 //
-// It also speeds up [Usage], since there is no need to parse the struct again.
+// It also speeds up [Usage] a bit, since a struct is only parsed once.
 var cache = make(map[reflect.Type][]Var)
 
 // Var holds the information about the environment variable parsed from a struct field.
@@ -34,7 +34,7 @@ type Var struct {
 
 // Usage writes a usage message documenting all defined environment variables to the given [io.Writer].
 // The caller must pass the same [Options] to both [Load] and [Usage], or nil.
-// An optional usage string can be added to environment variables using the `usage:"STRING"` struct tag.
+// An optional usage string can be added to environment variables with the `usage:"STRING"` struct tag.
 // The format of the message can be customized by implementing the Usage([]env.Var, io.Writer, *env.Options) method on the cfg's type.
 func Usage(cfg any, w io.Writer, opts *Options) {
 	pv := reflect.ValueOf(cfg)
