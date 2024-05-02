@@ -20,6 +20,17 @@ func TestUsage(t *testing.T) {
 		assert.Equal[E](t, buf.String(), "  FOO  string  default <empty>\n")
 	})
 
+	t.Run("with Options.NameSep", func(t *testing.T) {
+		var buf bytes.Buffer
+		var cfg struct {
+			A struct {
+				Foo int `env:"FOO"`
+			} `env:"A"`
+		}
+		env.Usage(&cfg, &buf, &env.Options{NameSep: "_"})
+		assert.Equal[E](t, buf.String(), "  A_FOO  int  default 0\n")
+	})
+
 	t.Run("custom usage message", func(t *testing.T) {
 		var buf bytes.Buffer
 		var cfg Config

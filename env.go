@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// Options are the options for the [Load] function.
+// Options are the options for the [Load] and [Usage] functions.
 type Options struct {
 	Source   Source // The source of environment variables. The default is [OS].
 	SliceSep string // The separator used to parse slice values. The default is space.
@@ -61,20 +61,12 @@ func (e *NotSetError) Error() string {
 //   - required: marks the environment variable as required
 //   - expand: expands the value of the environment variable using [os.Expand]
 func Load(cfg any, opts *Options) error {
-	if opts == nil {
-		opts = new(Options)
-	}
-	if opts.Source == nil {
-		opts.Source = OS
-	}
-	if opts.SliceSep == "" {
-		opts.SliceSep = " "
-	}
-
 	pv := reflect.ValueOf(cfg)
 	if !structPtr(pv) {
 		panic("env: cfg must be a non-nil struct pointer")
 	}
+
+	opts = setDefaultOptions(opts)
 
 	v := pv.Elem()
 	vars := parseVars(v, opts)
@@ -110,6 +102,19 @@ func Load(cfg any, opts *Options) error {
 	}
 
 	return nil
+}
+
+func setDefaultOptions(opts *Options) *Options {
+	if opts == nil {
+		opts = new(Options)
+	}
+	if opts.Source == nil {
+		opts.Source = OS
+	}
+	if opts.SliceSep == "" {
+		opts.SliceSep = " "
+	}
+	return opts
 }
 
 func parseVars(v reflect.Value, opts *Options) []Var {
