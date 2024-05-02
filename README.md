@@ -192,13 +192,13 @@ os.Setenv("DB_HOST", "localhost")
 os.Setenv("DB_PORT", "5432")
 
 var cfg struct {
-	DB struct {
-		Host string `env:"HOST"`
-		Port int    `env:"PORT"`
-	} `env:"DB"`
+    DB struct {
+        Host string `env:"HOST"`
+        Port int    `env:"PORT"`
+    } `env:"DB"`
 }
 if err := env.Load(&cfg, &env.Options{NameSep: "_"}); err != nil {
-	fmt.Println(err)
+    fmt.Println(err)
 }
 
 fmt.Println(cfg.DB.Host) // localhost
