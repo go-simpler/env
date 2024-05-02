@@ -42,6 +42,8 @@ func Usage(cfg any, w io.Writer, opts *Options) {
 		panic("env: cfg must be a non-nil struct pointer")
 	}
 
+	opts = setDefaultOptions(opts)
+
 	v := pv.Elem()
 	vars, ok := cache[v.Type()]
 	if !ok {
