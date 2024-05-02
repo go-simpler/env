@@ -28,7 +28,7 @@ func TestLoad(t *testing.T) {
 			t.Run(name, func(t *testing.T) {
 				const panicMsg = "env: cfg must be a non-nil struct pointer"
 
-				load := func() { _ = env.Load(cfg, &env.Options{Source: env.Map{}}) }
+				load := func() { _ = env.Load(cfg, nil) }
 				assert.Panics[E](t, load, panicMsg)
 
 				usage := func() { env.Usage(cfg, io.Discard, nil) }
@@ -41,7 +41,7 @@ func TestLoad(t *testing.T) {
 		var cfg struct {
 			Foo int `env:""`
 		}
-		load := func() { _ = env.Load(&cfg, &env.Options{Source: env.Map{}}) }
+		load := func() { _ = env.Load(&cfg, nil) }
 		assert.Panics[E](t, load, "env: empty tag name is not allowed")
 	})
 
@@ -49,7 +49,7 @@ func TestLoad(t *testing.T) {
 		var cfg struct {
 			Foo int `env:"FOO,?"`
 		}
-		load := func() { _ = env.Load(&cfg, &env.Options{Source: env.Map{}}) }
+		load := func() { _ = env.Load(&cfg, nil) }
 		assert.Panics[E](t, load, "env: invalid tag option `?`")
 	})
 
@@ -57,7 +57,7 @@ func TestLoad(t *testing.T) {
 		var cfg struct {
 			Foo int `env:"FOO,required" default:"1"`
 		}
-		load := func() { _ = env.Load(&cfg, &env.Options{Source: env.Map{}}) }
+		load := func() { _ = env.Load(&cfg, nil) }
 		assert.Panics[E](t, load, "env: `required` and `default` can't be used simultaneously")
 	})
 
