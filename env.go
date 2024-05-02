@@ -12,7 +12,7 @@ import (
 type Options struct {
 	Source   Source // The source of environment variables. The default is [OS].
 	SliceSep string // The separator used to parse slice values. The default is space.
-	NameSep  string // The separator used to join nested struct names. The default is empty string.
+	NameSep  string // The separator used to concatenate environment variable names from nested struct tags. The default is an empty string.
 }
 
 // NotSetError is returned when environment variables are marked as required but not set.

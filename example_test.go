@@ -52,7 +52,7 @@ func ExampleLoad_nestedStruct() {
 	// Output: 8080
 }
 
-func ExampleLoad_nestedStructPrefixed() {
+func ExampleLoad_nestedStructWithPrefix() {
 	os.Setenv("DBHOST", "localhost")
 	os.Setenv("DBPORT", "5432")
 
@@ -73,7 +73,7 @@ func ExampleLoad_nestedStructPrefixed() {
 	// 5432
 }
 
-func ExampleLoad_nestedStructPrefixedWithSeparator() {
+func ExampleLoad_nestedStructWithPrefixAndSeparator() {
 	os.Setenv("DB_HOST", "localhost")
 	os.Setenv("DB_PORT", "5432")
 
