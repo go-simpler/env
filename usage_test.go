@@ -5,9 +5,9 @@ import (
 	"io"
 	"testing"
 
-	"go-simpler.org/env"
-	"go-simpler.org/env/internal/assert"
-	. "go-simpler.org/env/internal/assert/EF"
+	"github.com/go-simpler.org/env"
+	"github.com/go-simpler.org/env/internal/assert"
+	. "github.com/go-simpler.org/env/internal/assert/EF"
 )
 
 func TestUsage(t *testing.T) {
