@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"go-simpler.org/env"
+	"github.com/go-simpler.org/env"
 )
 
 func ExampleLoad() {
