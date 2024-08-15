@@ -8,7 +8,7 @@
 // It should be dot-imported so that [E] and [F] can be used as local types.
 package EF
 
-import "go-simpler.org/env/internal/assert"
+import "github.com/go-simpler.org/env/internal/assert"
 
 type (
 	E = assert.E
