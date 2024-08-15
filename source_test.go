@@ -3,9 +3,9 @@ package env_test
 import (
 	"testing"
 
-	"go-simpler.org/env"
-	"go-simpler.org/env/internal/assert"
-	. "go-simpler.org/env/internal/assert/EF"
+	"github.com/github.com/go-simpler.org/env"
+	"github.com/github.com/go-simpler.org/env/internal/assert"
+	. "github.com/github.com/go-simpler.org/env/internal/assert/EF"
 )
 
 func TestMap_LookupEnv(t *testing.T) {
