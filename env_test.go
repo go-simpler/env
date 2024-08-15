@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"go-simpler.org/env"
-	"go-simpler.org/env/internal/assert"
-	. "go-simpler.org/env/internal/assert/EF"
+	"github.com/go-simpler.org/env"
+	"github.com/go-simpler.org/env/internal/assert"
+	. "github.com/go-simpler.org/env/internal/assert/EF"
 )
 
 //go:generate go run -tags=cp go-simpler.org/assert/cmd/cp@v0.8.0 -dir=internal
